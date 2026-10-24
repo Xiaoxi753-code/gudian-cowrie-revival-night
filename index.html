@@ -1,0 +1,2247 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>器盖上的复活夜：古滇万贝迷踪</title>
+    <style>
+      :root {
+        --gold: #ffc94d;
+        --gold2: #fff0a4;
+        --bronze: #55d6a1;
+        --red: #ff3c38;
+        --blue: #3aa8ff;
+        --green: #52e06f;
+        --ink: #f8eccb;
+        --dim: #ad9c73;
+        --line: rgba(255, 201, 77, 0.28);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #020302;
+        color: var(--ink);
+        font-family: 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        cursor: none;
+      }
+      button,
+      a,
+      input {
+        pointer-events: none;
+      }
+      #game {
+        position: relative;
+        width: min(100vw, 177.7778vh);
+        height: min(100vh, 56.25vw);
+        min-width: 720px;
+        min-height: 405px;
+        overflow: hidden;
+        isolation: isolate;
+        background: #07100c;
+        border: 1px solid #3a2c12;
+        box-shadow: 0 0 80px #000 inset;
+      }
+      #game::before {
+        content: '';
+        position: absolute;
+        inset: -3%;
+        z-index: -3;
+        background:
+          linear-gradient(rgba(2, 7, 5, 0.58), rgba(2, 5, 4, 0.92)),
+          url('./assets/images/bg-main-front.jpg') center/cover;
+        filter: saturate(0.68) contrast(1.18);
+      }
+      #game::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 80;
+        pointer-events: none;
+        background:
+          radial-gradient(circle, transparent 52%, rgba(0, 0, 0, 0.78)),
+          repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.018) 4px);
+        mix-blend-mode: screen;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #hud {
+        position: absolute;
+        z-index: 30;
+        left: 1.4%;
+        right: 1.4%;
+        top: 1.4%;
+        height: 12.5%;
+        display: grid;
+        grid-template-columns: 1.55fr 0.62fr 0.8fr 0.62fr;
+        gap: 1%;
+        align-items: stretch;
+      }
+      .hudBox {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7vw;
+        background: linear-gradient(180deg, rgba(17, 27, 21, 0.95), rgba(5, 9, 7, 0.92));
+        border: 1px solid var(--line);
+        clip-path: polygon(
+          10px 0,
+          100% 0,
+          100% calc(100% - 10px),
+          calc(100% - 10px) 100%,
+          0 100%,
+          0 10px
+        );
+        box-shadow: 0 0 18px rgba(255, 201, 77, 0.08) inset;
+      }
+      #brand {
+        align-items: flex-start;
+        justify-content: center;
+        flex-direction: column;
+        padding-left: 5%;
+      }
+      #brand h1 {
+        font-size: clamp(13px, 1.22vw, 23px);
+        letter-spacing: 0.06em;
+        color: var(--gold2);
+        white-space: nowrap;
+        text-shadow: 0 0 14px rgba(255, 201, 77, 0.38);
+      }
+      #brand p {
+        font-size: clamp(8px, 0.63vw, 12px);
+        letter-spacing: 0.32em;
+        color: #72c69f;
+        margin-top: 0.35em;
+      }
+      .metric {
+        font-family: Impact, 'Arial Narrow', sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .metric small {
+        position: absolute;
+        left: 8%;
+        top: 8%;
+        font-family: inherit;
+        letter-spacing: 0.16em;
+        color: var(--dim);
+        font-size: clamp(7px, 0.55vw, 11px);
+      }
+      #timer {
+        font-size: clamp(28px, 3.25vw, 62px);
+        line-height: 1;
+        color: #fff4cd;
+        text-shadow: 0 0 18px rgba(255, 201, 77, 0.32);
+      }
+      #timer.danger {
+        color: #ff554d;
+        animation: timerPulse 0.5s infinite;
+      }
+      #shells {
+        font-size: clamp(24px, 2.7vw, 52px);
+        color: var(--gold);
+        text-shadow: 0 0 20px rgba(255, 201, 77, 0.42);
+      }
+      #shells::after {
+        content: ' 贝';
+        font: 700 clamp(9px, 0.7vw, 13px) 'Microsoft YaHei';
+        color: var(--dim);
+      }
+      #combo {
+        font-size: clamp(26px, 3vw, 56px);
+        color: #76edac;
+        text-shadow: 0 0 18px rgba(85, 214, 161, 0.35);
+      }
+      #combo::after {
+        content: ' COMBO';
+        font: 700 clamp(7px, 0.55vw, 11px) 'Microsoft YaHei';
+        color: var(--dim);
+      }
+      #bank {
+        position: absolute;
+        right: 1.6%;
+        top: 15.1%;
+        z-index: 33;
+        color: var(--gold2);
+        font-size: clamp(8px, 0.62vw, 12px);
+        letter-spacing: 0.12em;
+        padding: 0.45% 1.2%;
+        border: 1px solid var(--line);
+        background: #07100c;
+        border-radius: 99px;
+        box-shadow: 0 0 18px rgba(255, 201, 77, 0.18);
+      }
+      #bank::before {
+        content: '◉';
+        margin-right: 0.5em;
+        color: var(--gold);
+      }
+      #bank.ready {
+        color: #07100b;
+        background: var(--gold);
+        box-shadow: 0 0 18px var(--gold);
+        animation: wake 0.55s infinite;
+      }
+      #phaseBanner {
+        position: absolute;
+        z-index: 31;
+        top: 15.2%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: clamp(8px, 0.7vw, 14px);
+        letter-spacing: 0.3em;
+        color: #d9cca6;
+        text-shadow: 0 2px 2px #000;
+      }
+      #layout {
+        position: absolute;
+        inset: 18% 1.4% 2.2%;
+        display: grid;
+        grid-template-columns: 19% 62% 19%;
+        gap: 1%;
+      }
+      .side {
+        background: linear-gradient(180deg, rgba(8, 15, 12, 0.9), rgba(4, 8, 6, 0.83));
+        border: 1px solid rgba(255, 201, 77, 0.22);
+        padding: 8% 7%;
+        overflow: hidden;
+        position: relative;
+      }
+      .sideTitle {
+        color: var(--gold);
+        font-size: clamp(9px, 0.78vw, 15px);
+        letter-spacing: 0.18em;
+        padding-bottom: 6%;
+        border-bottom: 1px solid var(--line);
+      }
+      #loreList {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 2.3%;
+        height: 88%;
+        justify-content: center;
+      }
+      .lore {
+        position: relative;
+        padding: 5% 4% 5% 14%;
+        border-left: 2px solid #323529;
+        color: #6f715f;
+        background: rgba(255, 255, 255, 0.018);
+        font-size: clamp(8px, 0.68vw, 13px);
+        line-height: 1.35;
+        transition: 0.3s;
+      }
+      .lore::before {
+        content: '◇';
+        position: absolute;
+        left: 4%;
+        color: #5d5d50;
+      }
+      .lore.on {
+        border-color: var(--gold);
+        color: var(--gold2);
+        background: linear-gradient(90deg, rgba(255, 201, 77, 0.12), transparent);
+        text-shadow: 0 0 8px rgba(255, 201, 77, 0.22);
+      }
+      .lore.on::before {
+        content: '◆';
+        color: var(--gold);
+      }
+      #arena {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 201, 77, 0.24);
+        background: radial-gradient(
+          circle at 50% 49%,
+          rgba(42, 77, 55, 0.22),
+          rgba(2, 5, 4, 0.92) 67%
+        );
+      }
+      #arena::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        background:
+          linear-gradient(
+            90deg,
+            transparent 49.8%,
+            rgba(255, 201, 77, 0.08) 50%,
+            transparent 50.2%
+          ),
+          linear-gradient(transparent 49.8%, rgba(255, 201, 77, 0.06) 50%, transparent 50.2%);
+      }
+      #discWrap {
+        position: absolute;
+        width: 65%;
+        aspect-ratio: 1;
+        left: 50%;
+        top: 51%;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 18px 24px #000);
+        transition: filter 0.25s;
+      }
+      #disc {
+        position: absolute;
+        inset: 6%;
+        border-radius: 50%;
+        background: url('./assets/images/lid-top-view.png') center/cover;
+        border: 3px solid #8e7138;
+        box-shadow:
+          0 0 0 0.45vw #11160f,
+          0 0 0 0.58vw #80672f,
+          0 0 40px #000 inset;
+        filter: saturate(0.62) sepia(0.18) contrast(1.12);
+      }
+      #disc::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          transparent 40%,
+          rgba(0, 0, 0, 0.12) 60%,
+          rgba(0, 0, 0, 0.62) 100%
+        );
+      }
+      #discWrap.fever {
+        filter: drop-shadow(0 0 13px #ffb128) drop-shadow(0 0 28px #3bcf9a);
+      }
+      #discWrap.fever #disc {
+        animation: feverFire 0.42s alternate infinite;
+        box-shadow:
+          0 0 0 0.45vw #132f22,
+          0 0 0 0.65vw var(--gold),
+          0 0 42px #51e0a7,
+          0 0 55px #ff9b24 inset;
+      }
+      #crosshair {
+        position: absolute;
+        z-index: 7;
+        left: 50%;
+        top: 50%;
+        width: 47%;
+        height: 12%;
+        transform-origin: left center;
+        transform: translateY(-50%) rotate(-90deg);
+        pointer-events: none;
+        transition: transform 0.055s linear;
+      }
+      #crosshair::before {
+        content: '';
+        position: absolute;
+        left: 10%;
+        right: 0;
+        top: 45%;
+        height: 10%;
+        background: linear-gradient(90deg, transparent, rgba(255, 218, 90, 0.65));
+        box-shadow: 0 0 10px var(--gold);
+      }
+      #crosshair::after {
+        content: '';
+        position: absolute;
+        right: -3%;
+        top: 9%;
+        width: 17%;
+        aspect-ratio: 1;
+        border-right: 4px solid var(--gold2);
+        border-top: 4px solid var(--gold2);
+        transform: rotate(45deg);
+        filter: drop-shadow(0 0 5px var(--gold));
+      }
+      #deity {
+        position: absolute;
+        z-index: 8;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 18%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        background: radial-gradient(
+          circle at 40% 34%,
+          #ffdf75,
+          #86631d 44%,
+          #1f2d22 47%,
+          #07100c 69%
+        );
+        border: 2px solid var(--gold);
+        box-shadow:
+          0 0 20px #000,
+          0 0 16px rgba(255, 201, 77, 0.42);
+        font-size: clamp(8px, 0.65vw, 13px);
+        font-weight: 900;
+        line-height: 1.15;
+        color: #fff0ae;
+      }
+      #deity span {
+        filter: drop-shadow(0 1px 1px #000);
+      }
+      .horse {
+        position: absolute;
+        z-index: 12;
+        width: 16%;
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: #aca487;
+        border: 2px solid rgba(170, 148, 85, 0.42);
+        background: radial-gradient(circle, #172219, #080d0a 68%);
+        font-size: clamp(8px, 0.65vw, 13px);
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        transition: 0.16s;
+      }
+      .horse::before {
+        content: '烈马' attr(data-n);
+        position: absolute;
+        top: 17%;
+        font-size: 0.9em;
+      }
+      .horse.active {
+        color: #fff4ba;
+        border-color: #ffe06c;
+        background: radial-gradient(circle, #8f5b13, #3c2b0c 60%, #121108);
+        box-shadow:
+          0 0 10px #fff2a4,
+          0 0 32px #ffb52e;
+        animation: horseHot 0.32s alternate infinite;
+      }
+      .horse.active.royal {
+        background: radial-gradient(circle, #fff6b0, #ae6b08 48%, #251405 72%);
+        box-shadow:
+          0 0 16px #fff,
+          0 0 44px #ff8c13;
+      }
+      .horse.active.royal::after {
+        content: '御马 ×2';
+        position: absolute;
+        bottom: 8%;
+        font-size: 0.72em;
+        color: #fff5b2;
+      }
+      .horse.selected {
+        outline: 2px solid #63eeb0;
+        outline-offset: 0.25vw;
+      }
+      .horse .need {
+        font:
+          900 clamp(18px, 2.15vw, 41px) Impact,
+          sans-serif;
+        margin-top: 14%;
+        text-shadow: 0 2px 2px #000;
+      }
+      .horse .need.A {
+        color: var(--green);
+      }
+      .horse .need.B {
+        color: var(--red);
+      }
+      .horse .need.X {
+        color: var(--blue);
+      }
+      .horse .ring {
+        position: absolute;
+        inset: -7%;
+        border-radius: 50%;
+        border: 4px solid var(--gold);
+        opacity: 0;
+      }
+      .horse.active .ring {
+        opacity: 1;
+        animation: countRing var(--life, 1.8s) linear forwards;
+      }
+      #prompt {
+        position: absolute;
+        z-index: 20;
+        left: 50%;
+        bottom: 2.5%;
+        transform: translateX(-50%);
+        min-width: 48%;
+        text-align: center;
+        font-size: clamp(10px, 0.9vw, 17px);
+        letter-spacing: 0.12em;
+        color: #f4e4bd;
+        background: rgba(2, 5, 4, 0.88);
+        border: 1px solid var(--line);
+        padding: 1.2% 3%;
+        clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+      }
+      #prompt b {
+        color: var(--gold2);
+        font-size: 1.18em;
+      }
+      .horse .need {
+        font-size: clamp(9px, 0.9vw, 17px);
+        font-family: 'Microsoft YaHei', sans-serif;
+        letter-spacing: 0.04em;
+      }
+      #statusLine {
+        position: absolute;
+        left: 7%;
+        right: 7%;
+        bottom: 4%;
+        display: flex;
+        align-items: center;
+        gap: 5%;
+        font-size: clamp(7px, 0.58vw, 11px);
+        color: #98947e;
+      }
+      #statusDot {
+        width: 0.75em;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #6d241e;
+        box-shadow: 0 0 7px #c32e22;
+      }
+      #statusDot.on {
+        background: #51ef82;
+        box-shadow: 0 0 9px #51ef82;
+      }
+      #eventScene {
+        position: absolute;
+        z-index: 45;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.12s;
+        background-position: center;
+        background-size: cover;
+      }
+      #eventScene.show {
+        opacity: 1;
+      }
+      #eventScene::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.88)),
+          linear-gradient(90deg, rgba(90, 0, 0, 0.38), transparent, rgba(90, 0, 0, 0.38));
+      }
+      #eventCopy {
+        position: absolute;
+        z-index: 2;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 90%;
+        font-weight: 900;
+        text-shadow:
+          0 4px 4px #000,
+          0 0 20px #000;
+      }
+      #eventTitle {
+        font-size: clamp(32px, 5.6vw, 106px);
+        letter-spacing: 0.08em;
+        color: #fff0b0;
+      }
+      #eventSub {
+        font-size: clamp(13px, 1.55vw, 29px);
+        margin-top: 1%;
+        letter-spacing: 0.18em;
+        color: #fff;
+      }
+      #eventMeter {
+        width: 40%;
+        height: 9px;
+        margin: 2% auto 0;
+        border: 1px solid var(--gold);
+        background: #130b06;
+        overflow: hidden;
+      }
+      #eventMeterFill {
+        height: 100%;
+        width: 100%;
+        transform-origin: left;
+        background: linear-gradient(90deg, #e53b32, #ffe05c);
+      }
+      #flashText {
+        position: absolute;
+        z-index: 65;
+        left: 50%;
+        top: 47%;
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 0;
+        text-align: center;
+        font:
+          900 clamp(25px, 4vw, 76px) Impact,
+          'Microsoft YaHei';
+        letter-spacing: 0.08em;
+        color: #fff;
+        text-shadow:
+          0 4px 0 #56110e,
+          0 0 22px #ff372e;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      #flashText.pop {
+        animation: textPop 0.8s ease-out;
+      }
+      #blood {
+        position: absolute;
+        z-index: 64;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        box-shadow:
+          inset 0 0 0 1.4vw rgba(255, 20, 18, 0.75),
+          inset 0 0 6vw 2vw #a50000;
+        background: radial-gradient(circle, transparent 45%, rgba(142, 0, 0, 0.48));
+        mix-blend-mode: screen;
+      }
+      #blood.on {
+        animation: blood 0.75s ease-out;
+      }
+      #particles {
+        position: absolute;
+        z-index: 70;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .shellParticle {
+        position: absolute;
+        width: 0.8vw;
+        min-width: 7px;
+        aspect-ratio: 1;
+        border-radius: 50% 45% 50% 42%;
+        background: radial-gradient(circle at 35% 28%, #fff7b2, #ffc52f 43%, #8e5510 72%);
+        box-shadow: 0 0 8px #ffd95a;
+        animation: shellFly 0.7s cubic-bezier(0.2, 0.7, 0.15, 1) forwards;
+      }
+      #game.shake {
+        animation: screenShake 0.45s linear;
+      }
+      .curtain {
+        position: absolute;
+        z-index: 100;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        background: radial-gradient(
+          circle at 50% 40%,
+          rgba(29, 61, 43, 0.62),
+          rgba(2, 4, 3, 0.98) 66%
+        );
+        cursor: none;
+      }
+      .gateInner {
+        width: 72%;
+        padding: 4% 5%;
+        border: 1px solid var(--line);
+        background: rgba(5, 10, 7, 0.76);
+        box-shadow:
+          0 0 60px #000,
+          0 0 35px rgba(255, 201, 77, 0.06) inset;
+        clip-path: polygon(
+          22px 0,
+          100% 0,
+          100% calc(100% - 22px),
+          calc(100% - 22px) 100%,
+          0 100%,
+          0 22px
+        );
+      }
+      .eyebrow {
+        font-size: clamp(8px, 0.7vw, 14px);
+        letter-spacing: 0.42em;
+        color: var(--bronze);
+        margin-bottom: 2%;
+      }
+      .bigTitle {
+        font-weight: 900;
+        font-size: clamp(24px, 3vw, 58px);
+        color: var(--gold2);
+        line-height: 1.2;
+        text-shadow: 0 0 22px rgba(255, 201, 77, 0.25);
+      }
+      .wake {
+        margin: 4% auto 0;
+        font-size: clamp(12px, 1.15vw, 22px);
+        letter-spacing: 0.12em;
+        color: #fff;
+        border-top: 1px solid var(--line);
+        padding-top: 3%;
+        animation: wake 1.2s ease-in-out infinite;
+      }
+      .padIcon {
+        font: 900 clamp(25px, 3vw, 58px) Arial;
+        color: var(--gold);
+        margin-bottom: 1%;
+        filter: drop-shadow(0 0 10px rgba(255, 201, 77, 0.5));
+      }
+      #ready {
+        background:
+          linear-gradient(rgba(2, 5, 3, 0.62), rgba(2, 5, 3, 0.93)),
+          url('./assets/images/bg-main-front.jpg') center/cover;
+      }
+      #ready .gateInner {
+        width: 76%;
+        padding: 3% 5%;
+      }
+      #ready .bigTitle {
+        font-size: clamp(25px, 3vw, 58px);
+      }
+      #ready .rules {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3%;
+        margin-top: 3%;
+        text-align: left;
+      }
+      .lesson {
+        position: relative;
+        min-height: 10vw;
+        padding: 8% 7% 7% 25%;
+        border: 1px solid rgba(255, 201, 77, 0.24);
+        background: linear-gradient(135deg, rgba(255, 201, 77, 0.1), rgba(0, 0, 0, 0.18));
+        color: #d6c9a7;
+        font-size: clamp(10px, 0.88vw, 17px);
+        line-height: 1.65;
+      }
+      .lesson::before {
+        content: attr(data-step);
+        position: absolute;
+        left: 7%;
+        top: 18%;
+        display: grid;
+        place-items: center;
+        width: 2.5em;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: var(--gold);
+        color: #101108;
+        font: 900 clamp(14px, 1.5vw, 28px) Impact;
+      }
+      .lesson b {
+        display: block;
+        color: #fff1b5;
+        font-size: 1.35em;
+        margin-bottom: 0.35em;
+      }
+      .keys {
+        color: #65efab;
+        font-weight: 900;
+      }
+      .optional {
+        margin-top: 2.5%;
+        font-size: clamp(9px, 0.7vw, 13px);
+        color: #b8ad8e;
+      }
+      .optional b {
+        color: var(--gold);
+      }
+      #countdown {
+        background: rgba(1, 4, 2, 0.84);
+        z-index: 110;
+      }
+      #countNum {
+        font: 900 clamp(90px, 16vw, 300px) Impact;
+        color: var(--gold2);
+        text-shadow:
+          0 0 35px var(--gold),
+          0 8px 0 #432d08;
+        animation: timerPulse 0.7s infinite;
+      }
+      #countHint {
+        font-size: clamp(13px, 1.2vw, 22px);
+        letter-spacing: 0.25em;
+        color: #fff;
+      }
+      .simpleKeys {
+        height: 60%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 5%;
+      }
+      .keyCap {
+        display: grid;
+        place-items: center;
+        height: 4.4vw;
+        min-height: 38px;
+        padding: 0 10%;
+        border: 2px solid #87723d;
+        border-bottom-width: 6px;
+        border-radius: 10px;
+        background: linear-gradient(#25352a, #0b110d);
+        color: #fff2b3;
+        font: 900 clamp(18px, 2vw, 38px) Arial;
+        box-shadow: 0 8px 16px #000;
+      }
+      .keyCap.space {
+        width: 90%;
+        margin: 8% auto 5%;
+        height: 3.8vw;
+        font-size: clamp(11px, 1vw, 19px);
+        letter-spacing: 0.18em;
+      }
+      .keyCap.lit {
+        transform: translateY(4px);
+        border-bottom-width: 2px;
+        background: var(--gold);
+        color: #111;
+      }
+      .simpleTip {
+        text-align: center;
+        color: #bdb08d;
+        font-size: clamp(9px, 0.72vw, 14px);
+        line-height: 1.8;
+      }
+      .simpleTip b {
+        color: #65efab;
+      }
+      #gate .gateInner {
+        width: 80%;
+        padding: 2.7% 5%;
+      }
+      .storyLead {
+        margin: 1.4% auto 2.5%;
+        color: #d8ccb0;
+        font-size: clamp(10px, 0.82vw, 16px);
+        line-height: 1.7;
+      }
+      .modeCards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3%;
+        margin: 2% auto 0;
+      }
+      .modeCard {
+        padding: 4% 5%;
+        border: 2px solid rgba(255, 201, 77, 0.2);
+        background: rgba(0, 0, 0, 0.3);
+        color: #9f9579;
+        transition: 0.16s;
+      }
+      .modeCard.on {
+        border-color: var(--gold);
+        background: linear-gradient(135deg, rgba(255, 201, 77, 0.17), rgba(38, 88, 62, 0.18));
+        color: #fff1c1;
+        box-shadow: 0 0 22px rgba(255, 201, 77, 0.15);
+      }
+      .modeIcon {
+        font-size: clamp(28px, 3.5vw, 66px);
+        line-height: 1;
+      }
+      .modeName {
+        font-weight: 900;
+        font-size: clamp(14px, 1.25vw, 24px);
+        margin: 0.45em 0;
+      }
+      .modeKeys {
+        font-size: clamp(9px, 0.7vw, 13px);
+        color: #71e8ad;
+      }
+      .modeStatus {
+        margin-top: 0.4em;
+        font-size: clamp(8px, 0.58vw, 11px);
+      }
+      #story {
+        background:
+          linear-gradient(rgba(1, 4, 2, 0.45), rgba(1, 4, 2, 0.94)),
+          url('./assets/images/bg-main-front.jpg') center/cover;
+      }
+      #story .gateInner {
+        width: 76%;
+        min-height: 62%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .storyChapter {
+        color: var(--bronze);
+        font-size: clamp(9px, 0.72vw, 14px);
+        letter-spacing: 0.35em;
+      }
+      .storyTitle {
+        margin: 2% 0;
+        font-size: clamp(30px, 3.7vw, 70px);
+        font-weight: 900;
+        color: var(--gold2);
+        text-shadow: 0 0 25px rgba(255, 201, 77, 0.35);
+      }
+      .storyBody {
+        max-width: 86%;
+        margin: 0 auto;
+        color: #eee2c3;
+        font-size: clamp(13px, 1.12vw, 21px);
+        line-height: 1.9;
+      }
+      .storyBody b {
+        color: var(--gold);
+      }
+      .storyDots {
+        display: flex;
+        justify-content: center;
+        gap: 0.7em;
+        margin-top: 3%;
+      }
+      .storyDots i {
+        width: 8px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #554b32;
+      }
+      .storyDots i.on {
+        background: var(--gold);
+        box-shadow: 0 0 9px var(--gold);
+      }
+      .scoreLore {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2%;
+        margin: 2% auto 0;
+        width: 94%;
+      }
+      .scoreLore span {
+        padding: 5% 3%;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.35);
+        font-size: clamp(8px, 0.68vw, 13px);
+        color: #cfc19e;
+      }
+      .scoreLore b {
+        display: block;
+        font-size: 1.45em;
+        color: var(--gold2);
+        margin-bottom: 0.2em;
+      }
+      #register {
+        background:
+          linear-gradient(rgba(1, 4, 2, 0.55), rgba(1, 4, 2, 0.95)),
+          url('./assets/images/lid-top-view.png') center/cover;
+      }
+      #register .gateInner {
+        width: 60%;
+      }
+      .nameLabel {
+        margin: 3% 0 1%;
+        font-size: clamp(10px, 0.8vw, 15px);
+        color: #bfb18c;
+        letter-spacing: 0.16em;
+      }
+      #playerNameInput {
+        pointer-events: auto;
+        width: 70%;
+        padding: 2.2% 3%;
+        border: 1px solid var(--gold);
+        outline: none;
+        background: rgba(1, 5, 3, 0.88);
+        color: var(--gold2);
+        text-align: center;
+        font: 900 clamp(18px, 2vw, 38px) 'Microsoft YaHei';
+        letter-spacing: 0.1em;
+        box-shadow: 0 0 20px rgba(255, 201, 77, 0.15) inset;
+      }
+      #nameError {
+        min-height: 1.7em;
+        margin-top: 1%;
+        color: #ff6d63;
+        font-size: clamp(9px, 0.7vw, 13px);
+      }
+      #playerBadge {
+        color: #72c69f !important;
+        letter-spacing: 0.15em !important;
+      }
+      .leaderTitle {
+        color: var(--gold);
+        font-size: clamp(9px, 0.7vw, 13px);
+        letter-spacing: 0.18em;
+        margin: 3% 0 1.5%;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 1.5%;
+      }
+      #leaderboard {
+        display: grid;
+        gap: 2px;
+        font-size: clamp(7px, 0.58vw, 11px);
+      }
+      .leaderRow {
+        display: grid;
+        grid-template-columns: 12% 48% 40%;
+        padding: 1.2% 2%;
+        background: rgba(255, 255, 255, 0.035);
+        color: #aaa085;
+      }
+      .leaderRow.me {
+        color: #fff0ad;
+        background: rgba(255, 201, 77, 0.12);
+      }
+      .leaderRow b {
+        color: var(--gold);
+        text-align: right;
+      }
+      .leaderEmpty {
+        color: #776f5d;
+        padding: 3% 0;
+      }
+      #resultScore {
+        padding: 4% 7%;
+      }
+      #stats {
+        margin: 2% 0;
+      }
+      #restart {
+        margin-top: 2%;
+      }
+      #result {
+        background: radial-gradient(
+          circle at 35% 45%,
+          rgba(34, 73, 51, 0.4),
+          rgba(2, 4, 3, 0.98) 68%
+        );
+      }
+      #resultGrid {
+        width: 91%;
+        height: 86%;
+        display: grid;
+        grid-template-columns: 45% 55%;
+        border: 1px solid var(--line);
+        background: rgba(4, 8, 6, 0.88);
+        box-shadow: 0 0 60px #000;
+      }
+      #resultScore {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: left;
+      }
+      #rank {
+        font:
+          900 clamp(25px, 3.4vw, 66px) Impact,
+          'Microsoft YaHei';
+        color: var(--gold2);
+        line-height: 1.05;
+        text-shadow: 0 0 22px rgba(255, 201, 77, 0.4);
+      }
+      #finalScore {
+        font:
+          900 clamp(24px, 3vw, 58px) Impact,
+          sans-serif;
+        color: var(--gold);
+        margin: 2% 0 1%;
+      }
+      #finalScore::after {
+        content: ' 海贝';
+        font: 700 0.3em 'Microsoft YaHei';
+        color: #a99b78;
+      }
+      #stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3%;
+        font-size: clamp(7px, 0.62vw, 12px);
+        color: #a99b78;
+      }
+      #stats b {
+        color: #fff0bc;
+        font-size: 1.4em;
+      }
+      #restart {
+        color: white;
+        font-size: clamp(9px, 0.78vw, 15px);
+        animation: wake 1s infinite;
+      }
+      #artifact {
+        position: relative;
+        overflow: hidden;
+        border-left: 1px solid var(--line);
+        background: #090d0a;
+      }
+      #artifact img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(0.78) contrast(1.06);
+      }
+      #artifactNotes {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          rgba(4, 8, 6, 0.86),
+          transparent 42%,
+          rgba(4, 8, 6, 0.08)
+        );
+        pointer-events: none;
+      }
+      .tag {
+        position: absolute;
+        left: 4%;
+        max-width: 44%;
+        padding: 1.5% 2%;
+        font-size: clamp(7px, 0.58vw, 11px);
+        color: #fff1c1;
+        background: rgba(4, 8, 6, 0.9);
+        border-left: 3px solid var(--gold);
+        box-shadow: 0 2px 10px #000;
+      }
+      .tag:nth-child(1) {
+        top: 7%;
+      }
+      .tag:nth-child(2) {
+        top: 24%;
+      }
+      .tag:nth-child(3) {
+        top: 43%;
+      }
+      .tag:nth-child(4) {
+        top: 64%;
+      }
+      .tag:nth-child(5) {
+        top: 81%;
+      }
+      @keyframes countRing {
+        from {
+          transform: rotate(0);
+          opacity: 1;
+        }
+        to {
+          transform: rotate(360deg);
+          opacity: 0;
+        }
+      }
+      @keyframes horseHot {
+        to {
+          transform: translate(-50%, -50%) scale(1.06);
+        }
+      }
+      @keyframes feverFire {
+        to {
+          filter: saturate(1.35) brightness(1.12);
+        }
+      }
+      @keyframes timerPulse {
+        50% {
+          transform: scale(1.08);
+          text-shadow: 0 0 30px red;
+        }
+      }
+      @keyframes wake {
+        50% {
+          opacity: 0.38;
+        }
+      }
+      @keyframes textPop {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.55);
+        }
+        16% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.18);
+        }
+        70% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -58%) scale(0.9);
+        }
+      }
+      @keyframes blood {
+        0% {
+          opacity: 0;
+        }
+        14%,
+        45% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      @keyframes screenShake {
+        0%,
+        100% {
+          transform: translate(0);
+        }
+        12% {
+          transform: translate(-1.2%, 1%);
+        }
+        25% {
+          transform: translate(1.1%, -0.8%);
+        }
+        38% {
+          transform: translate(-0.7%, -1.1%);
+        }
+        50% {
+          transform: translate(1.2%, 0.5%);
+        }
+        65% {
+          transform: translate(-0.8%, 0.4%);
+        }
+        80% {
+          transform: translate(0.5%, -0.6%);
+        }
+      }
+      @keyframes shellFly {
+        0% {
+          transform: translate(0, 0) rotate(0) scale(0.7);
+          opacity: 0;
+        }
+        12% {
+          opacity: 1;
+        }
+        55% {
+          transform: translate(var(--mx), var(--my)) rotate(380deg) scale(1.2);
+        }
+        100% {
+          left: 87%;
+          top: 13%;
+          transform: translate(0, 0) rotate(760deg) scale(0.3);
+          opacity: 0;
+        }
+      }
+      @media (max-aspect-ratio: 16/9) {
+        #game {
+          min-width: 0;
+          min-height: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="game" aria-label="器盖上的复活夜：古滇万贝迷踪">
+      <header id="hud">
+        <div class="hudBox" id="brand">
+          <h1>《器盖上的复活夜：古滇万贝迷踪》</h1>
+          <p id="playerBadge">守器人尚未登记</p>
+        </div>
+        <div class="hudBox metric"><small>倒计时</small><span id="timer">60.0</span></div>
+        <div class="hudBox metric"><small>海贝库存</small><span id="shells">0</span></div>
+        <div class="hudBox metric"><small>疾驰连击</small><span id="combo">0</span></div>
+      </header>
+      <div id="bank">万贝铜仓 · 沉睡</div>
+      <div id="phaseBanner">闭馆之后 · 器盖尚未苏醒</div>
+      <section id="layout">
+        <aside class="side">
+          <div class="sideTitle">古滇文物词条加成</div>
+          <ul id="loreList">
+            <li class="lore" data-lore="horse">一人牵一马，环盖周沿分布</li>
+            <li class="lore" data-lore="hair">头顶梳螺髻、跣足</li>
+            <li class="lore" data-lore="drum">主尊坐于铜鼓之上</li>
+            <li class="lore" data-lore="jade">腕戴宽边玉镯、左腰佩剑</li>
+            <li class="lore" data-lore="kneel">身前一人右膝跪地、双手平伸</li>
+            <li class="lore" data-lore="tiger">双虎攀器，夺贝狂暴</li>
+          </ul>
+        </aside>
+        <section id="arena">
+          <div id="discWrap">
+            <div id="disc"></div>
+            <div id="crosshair"></div>
+            <div id="deity">
+              <span>御神<br />主尊</span>
+            </div>
+          </div>
+          <div id="prompt">按 <b>← →</b> 选择发光马，再拍 <b>空格</b></div>
+        </section>
+        <aside class="side">
+          <div class="sideTitle" id="controlTitle">电脑键盘 · 旋盖敲鼓</div>
+          <div class="simpleKeys">
+            <div class="keyCap" id="simpleLeft">←</div>
+            <div class="keyCap" id="simpleRight">→</div>
+          </div>
+          <div class="keyCap space" id="simpleSpace">空　格 · 敲鼓</div>
+          <div class="simpleTip" id="controlTip">
+            <b>左右键</b>旋转古滇器盖<br /><b>空格键</b>敲响中央铜鼓<br />抓马、防御、退虎都是敲鼓
+          </div>
+          <div id="statusLine">
+            <i id="statusDot"></i><span id="statusText">等待选择操控模式</span>
+          </div>
+        </aside>
+      </section>
+      <div id="eventScene">
+        <div id="eventCopy">
+          <div id="eventTitle"></div>
+          <div id="eventSub"></div>
+          <div id="eventMeter"><div id="eventMeterFill"></div></div>
+        </div>
+      </div>
+      <div id="blood"></div>
+      <div id="flashText"></div>
+      <div id="particles"></div>
+      <section id="story" class="curtain">
+        <div class="gateInner">
+          <div class="storyChapter" id="storyChapter">序幕 · 闭馆钟声</div>
+          <div class="storyTitle" id="storyTitle">器盖上的人马，睁开了眼睛</div>
+          <div class="storyBody" id="storyBody"></div>
+          <div class="storyDots" id="storyDots"><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="wake" id="storyNext">按 ENTER 继续</div>
+        </div>
+      </section>
+      <section id="register" class="curtain hidden">
+        <div class="gateInner">
+          <div class="eyebrow">守器人名册 · 今夜值守登记</div>
+          <div class="bigTitle">请留下你的名字</div>
+          <div class="storyLead">
+            这个名字会写入本机的“万贝守器榜”。<br />成绩只保存在当前电脑，不需要联网。
+          </div>
+          <div class="nameLabel">守器人姓名（最多 12 个字符）</div>
+          <input
+            id="playerNameInput"
+            maxlength="12"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="例如：滇池守夜人"
+          />
+          <div id="nameError"></div>
+          <div class="wake">输入姓名后按 ENTER 登记</div>
+        </div>
+      </section>
+      <section id="gate" class="curtain hidden">
+        <div class="gateInner">
+          <div class="eyebrow">守器人已登记 · 请选择今夜的操控方式</div>
+          <div class="bigTitle">《器盖上的复活夜：古滇万贝迷踪》</div>
+          <div class="storyLead">
+            七匹铜马正载着海贝沿器盖逃窜。<br />在晨光到来前，旋转器盖、敲响铜鼓，追回失散的万贝。
+          </div>
+          <div class="modeCards">
+            <div class="modeCard on" id="modeKeyboard">
+              <div class="modeIcon">⌨</div>
+              <div class="modeName">电脑键盘模式</div>
+              <div class="modeKeys">← → 旋盖　·　空格敲鼓</div>
+              <div class="modeStatus">无需手柄，立即可玩</div>
+            </div>
+            <div class="modeCard" id="modeGamepad">
+              <div class="modeIcon">◖▰◗</div>
+              <div class="modeName">游戏手柄模式</div>
+              <div class="modeKeys">左摇杆/十字键旋盖　·　A 敲鼓</div>
+              <div class="modeStatus" id="padModeStatus">正在检测手柄…</div>
+            </div>
+          </div>
+          <div class="wake">按 ← → 选择模式 · ENTER 确认</div>
+        </div>
+      </section>
+      <section id="ready" class="curtain hidden">
+        <div class="gateInner">
+          <div class="eyebrow" id="readyMode">电脑键盘模式 · 一局严格 60 秒</div>
+          <div class="bigTitle" id="readyTitle">旋转器盖，敲鼓收贝</div>
+          <div class="rules">
+            <div class="lesson" data-step="1">
+              <b id="lessonMoveTitle">发光的铜马出现了</b
+              ><span id="lessonMove"
+                >按键盘 <span class="keys">←　→</span>，旋转器盖让金色箭头对准它。</span
+              >
+            </div>
+            <div class="lesson" data-step="2">
+              <b id="lessonActionTitle">对准后敲响铜鼓</b
+              ><span id="lessonAction"
+                ><span class="keys">空格 = 敲鼓</span><br />抓马、防御、退虎都使用它。</span
+              >
+            </div>
+          </div>
+          <div class="optional">天亮前追回越多海贝越好。连续成功会<b>自动进入万贝爆发</b>。</div>
+          <div class="wake" id="readyWake">按 ENTER 开始 · 接下来跟着屏幕做</div>
+        </div>
+      </section>
+      <section id="countdown" class="curtain hidden">
+        <div>
+          <div id="countNum">3</div>
+          <div id="countHint">左右选中发光马 → 拍空格</div>
+        </div>
+      </section>
+      <section id="result" class="curtain hidden">
+        <div id="resultGrid">
+          <div id="resultScore">
+            <div class="eyebrow">晨光封器 · 万贝归仓</div>
+            <div id="rank">SSS·古滇御神</div>
+            <div id="finalScore">0</div>
+            <div id="stats">
+              <span>最高连击<br /><b id="maxCombo">0</b></span
+              ><span>铜马封印<br /><b id="successes">0</b></span
+              ><span>主尊御守<br /><b id="guards">0</b></span
+              ><span>铜虎击退<br /><b id="tigerHits">0</b></span>
+            </div>
+            <div class="leaderTitle">万贝守器榜 · 本机前五名</div>
+            <div id="leaderboard"></div>
+            <div class="optional">晨光照入展厅，一切重新凝固。只有器盖中的海贝，记得这个夜晚。</div>
+            <div id="restart">按 ENTER / START 再守一夜</div>
+          </div>
+          <figure id="artifact">
+            <img src="./assets/images/artifact-label.jpg" alt="文物真迹考据卡：展厅实拍说明牌" />
+            <div id="artifactNotes">
+              <div class="tag">① 一人牵一马，七组人物环盖周沿分布</div>
+              <div class="tag">② 主尊坐于铜鼓，腕戴宽边玉镯</div>
+              <div class="tag">③ 主尊左腰佩剑，身前人物右膝跪地</div>
+              <div class="tag">④ 人物头梳螺髻、跣足，双手平伸</div>
+              <div class="tag">⑤ 器身双虎攀附——化作最后 20 秒夺贝狂潮</div>
+            </div>
+          </figure>
+        </div>
+      </section>
+    </main>
+    <script>
+      (() => {
+        'use strict';
+        const $ = (s) => document.querySelector(s),
+          $$ = (s) => [...document.querySelectorAll(s)];
+        // DOM references are centralized to keep rendering functions deterministic.
+        const ui = {
+          game: $('#game'),
+          story: $('#story'),
+          register: $('#register'),
+          nameInput: $('#playerNameInput'),
+          gate: $('#gate'),
+          ready: $('#ready'),
+          countdown: $('#countdown'),
+          countNum: $('#countNum'),
+          result: $('#result'),
+          timer: $('#timer'),
+          shells: $('#shells'),
+          combo: $('#combo'),
+          phase: $('#phaseBanner'),
+          bank: $('#bank'),
+          disc: $('#discWrap'),
+          cross: $('#crosshair'),
+          prompt: $('#prompt'),
+          dot: $('#statusDot'),
+          status: $('#statusText'),
+          scene: $('#eventScene'),
+          eventTitle: $('#eventTitle'),
+          eventSub: $('#eventSub'),
+          eventFill: $('#eventMeterFill'),
+          flash: $('#flashText'),
+          blood: $('#blood'),
+          particles: $('#particles'),
+        };
+        const keyMap = { Enter: 'START', Space: 'A' };
+        const STORAGE_KEYS = Object.freeze({
+          lastPlayer: 'gudian_last_player',
+          leaderboard: 'gudian_leaderboard',
+        });
+        const GAME_DURATION_SECONDS = 60;
+        const MAX_PLAYER_NAME_LENGTH = 12;
+        const MAX_SAVED_SCORES = 20;
+        // Static narrative content. UI flow is controlled by the state machine below.
+        const storyPages = [
+          {
+            chapter: '第一幕 · 闭馆钟声',
+            title: '器盖上的人马，睁开了眼睛',
+            body: '博物馆最后一盏灯熄灭。沉睡在展柜中的古滇器盖泛起金光，<b>七匹铜马从凝固的青铜中苏醒</b>。',
+          },
+          {
+            chapter: '第二幕 · 万贝迷踪',
+            title: '七马携贝，沿器盖逃窜',
+            body: '铜马载着海贝奔向器盖边缘。你是今夜的<b>守器人</b>：旋转器盖、敲响中央铜鼓，在晨光到来前追回失散的万贝。',
+          },
+          {
+            chapter: '第三幕 · 海贝如何归仓',
+            title: '每一次敲鼓，都有回响',
+            body: '<div class="scoreLore"><span><b>+300 贝</b>敲鼓封印一匹铜马</span><span><b>+500 贝</b>神速出手的基础奖励</span><span><b>+800 贝</b>挡住主尊雷霆训斥</span><span><b>+100 贝</b>每次敲鼓震退铜虎</span><span><b>×2 / ×3</b>连击与万贝归潮自动爆发</span><span><b>-500 贝</b>铜马逃脱或御守失败</span></div>',
+          },
+          {
+            chapter: '终幕预告 · 黎明封器',
+            title: '主尊震怒，双虎攀器',
+            body: '御神主尊会在铜鼓上发出雷霆训斥，双虎也将在黎明前爬上器身夺贝。<b>守住六十秒</b>；晨光照入展厅时，一切会重新凝固。只有器盖中的海贝，记得这个夜晚。',
+          },
+        ];
+        let state = 'STORY',
+          storyStep = 0,
+          playerName = '',
+          currentRunId = '',
+          inputMode = 'keyboard',
+          modeChoice = 0,
+          gamepad = null,
+          modePadPrev = {},
+          angle = -Math.PI / 2,
+          selectedIndex = 0,
+          last = performance.now(),
+          startedAt = 0,
+          countdownEnd = 0,
+          score = 0,
+          displayScore = 0,
+          combo = 0,
+          maxCombo = 0,
+          successes = 0,
+          guards = 0,
+          tigerHits = 0,
+          energy = 0,
+          overdriveUntil = 0,
+          target = null,
+          nextTargetAt = 0,
+          scold = null,
+          scoldIndex = 0,
+          tiger = null,
+          tigerDone = false,
+          phase = -1,
+          held = {},
+          prevHeld = {},
+          keys = {},
+          audio = null;
+        const horses = [];
+        function buildHorses() {
+          for (let i = 0; i < 7; i++) {
+            const a = -Math.PI / 2 + (i * Math.PI * 2) / 7,
+              x = 50 + 42 * Math.cos(a),
+              y = 50 + 42 * Math.sin(a),
+              el = document.createElement('div');
+            el.className = 'horse';
+            el.dataset.n = i + 1;
+            el.style.left = x + '%';
+            el.style.top = y + '%';
+            el.innerHTML = '<span class="need"></span><i class="ring"></i>';
+            ui.disc.appendChild(el);
+            horses.push({ el, a });
+          }
+        }
+        buildHorses();
+        function renderStory() {
+          const p = storyPages[storyStep];
+          $('#storyChapter').textContent = p.chapter;
+          $('#storyTitle').textContent = p.title;
+          $('#storyBody').innerHTML = p.body;
+          $$('#storyDots i').forEach((d, i) => d.classList.toggle('on', i === storyStep));
+          $('#storyNext').textContent =
+            storyStep === storyPages.length - 1 ? '按 ENTER 登记守器人' : '按 ENTER 继续';
+        }
+        function advanceStory() {
+          if (storyStep < storyPages.length - 1) {
+            storyStep++;
+            renderStory();
+            tone(330 + storyStep * 70, 0.09, 'triangle', 0.04, 1.2);
+          } else showRegister();
+        }
+        function showRegister() {
+          state = 'NAME';
+          ui.story.classList.add('hidden');
+          ui.register.classList.remove('hidden');
+          let saved = '';
+          try {
+            saved = localStorage.getItem(STORAGE_KEYS.lastPlayer) || '';
+          } catch (e) {}
+          ui.nameInput.value = saved;
+          $('#nameError').textContent = '';
+          setTimeout(() => {
+            ui.nameInput.focus();
+            ui.nameInput.select();
+          }, 60);
+        }
+        function registerPlayer() {
+          const name = ui.nameInput.value.trim();
+          if (!name) {
+            $('#nameError').textContent = '请先输入守器人姓名';
+            tone(90, 0.18, 'sawtooth', 0.04, 0.7);
+            ui.nameInput.focus();
+            return;
+          }
+          playerName = name.slice(0, MAX_PLAYER_NAME_LENGTH);
+          $('#nameError').textContent = '';
+          try {
+            localStorage.setItem(STORAGE_KEYS.lastPlayer, playerName);
+          } catch (e) {}
+          $('#playerBadge').textContent = `守器人 · ${playerName}`;
+          ui.register.classList.add('hidden');
+          showMode();
+          tone(523, 0.12, 'triangle', 0.06, 1.4);
+        }
+        function loadLeaders() {
+          try {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]');
+            return Array.isArray(data) ? data : [];
+          } catch (e) {
+            return [];
+          }
+        }
+        function saveScore(rank) {
+          const list = loadLeaders();
+          currentRunId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+          list.push({
+            id: currentRunId,
+            name: playerName || '无名守器人',
+            score,
+            rank,
+            time: new Date().toLocaleDateString('zh-CN'),
+          });
+          list.sort((a, b) => b.score - a.score);
+          try {
+            localStorage.setItem(
+              STORAGE_KEYS.leaderboard,
+              JSON.stringify(list.slice(0, MAX_SAVED_SCORES)),
+            );
+          } catch (e) {}
+          renderLeaderboard(list.slice(0, 5));
+        }
+        function renderLeaderboard(list = loadLeaders().slice(0, 5)) {
+          const box = $('#leaderboard');
+          box.innerHTML = '';
+          if (!list.length) {
+            box.innerHTML = '<div class="leaderEmpty">尚无记录，等待第一位守器人。</div>';
+            return;
+          }
+          list.forEach((r, i) => {
+            const row = document.createElement('div');
+            row.className = 'leaderRow' + (r.id === currentRunId ? ' me' : '');
+            const pos = document.createElement('span'),
+              name = document.createElement('span'),
+              points = document.createElement('b');
+            pos.textContent = `#${i + 1}`;
+            name.textContent = r.name;
+            points.textContent = Number(r.score || 0).toLocaleString('zh-CN') + ' 贝';
+            row.append(pos, name, points);
+            box.appendChild(row);
+          });
+        }
+        renderStory();
+        function ensureAudio() {
+          if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+          if (audio.state === 'suspended') audio.resume().catch(() => {});
+        }
+        function tone(freq, dur, type = 'sine', gain = 0.08, slide = 1) {
+          try {
+            ensureAudio();
+            const t = audio.currentTime,
+              o = audio.createOscillator(),
+              g = audio.createGain();
+            o.type = type;
+            o.frequency.setValueAtTime(freq, t);
+            o.frequency.exponentialRampToValueAtTime(Math.max(35, freq * slide), t + dur);
+            g.gain.setValueAtTime(gain, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            o.connect(g).connect(audio.destination);
+            o.start(t);
+            o.stop(t + dur);
+          } catch (e) {}
+        }
+        function rewardSound() {
+          tone(880, 0.12, 'sine', 0.08, 1.45);
+          setTimeout(() => tone(1320, 0.13, 'triangle', 0.05, 1.12), 55);
+        }
+        function punishSound() {
+          tone(105, 0.58, 'sawtooth', 0.16, 0.45);
+          tone(62, 0.7, 'sine', 0.17, 0.55);
+        }
+        function tigerSound() {
+          tone(210, 0.08, 'square', 0.05, 1.7);
+        }
+        function rumble(strong = 0.25, weak = 0.55, duration = 100) {
+          const a =
+            gamepad &&
+            (gamepad.vibrationActuator || (gamepad.hapticActuators && gamepad.hapticActuators[0]));
+          if (!a) return;
+          try {
+            if (a.playEffect)
+              a.playEffect('dual-rumble', {
+                startDelay: 0,
+                duration,
+                strongMagnitude: strong,
+                weakMagnitude: weak,
+              });
+            else if (a.pulse) a.pulse(Math.max(strong, weak), duration);
+          } catch (e) {}
+        }
+        function setConnected() {
+          ui.dot.classList.add('on');
+          ui.status.textContent =
+            inputMode === 'gamepad'
+              ? gamepad
+                ? '手柄模式 · 摇杆/十字键 + A'
+                : '手柄已断开，请重新连接'
+              : '键盘模式 · ← → + 空格';
+        }
+        function scanPad() {
+          const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+          gamepad = [...pads].find(Boolean) || null;
+          setConnected();
+          const h = {};
+          if (inputMode === 'gamepad' && gamepad) {
+            const b = gamepad.buttons || [];
+            h.A = !!b[0]?.pressed;
+            h.B = !!b[1]?.pressed;
+            h.START = !!b[9]?.pressed;
+            h.LEFT = !!b[14]?.pressed;
+            h.RIGHT = !!b[15]?.pressed;
+            const x = gamepad.axes?.[0] || 0,
+              y = gamepad.axes?.[1] || 0;
+            if (Math.hypot(x, y) > 0.34) angle = Math.atan2(y, x);
+          } else if (inputMode === 'keyboard') {
+            Object.entries(keyMap).forEach(([k, v]) => {
+              if (keys[k]) h[v] = true;
+            });
+          }
+          return h;
+        }
+        function pressed(k) {
+          return held[k] && !prevHeld[k];
+        }
+        function updatePadUI() {
+          ui.cross.style.transform = `translateY(-50%) rotate(${angle}rad)`;
+          $('#simpleLeft')?.classList.toggle(
+            'lit',
+            inputMode === 'keyboard' ? !!keys.ArrowLeft : !!held.LEFT,
+          );
+          $('#simpleRight')?.classList.toggle(
+            'lit',
+            inputMode === 'keyboard' ? !!keys.ArrowRight : !!held.RIGHT,
+          );
+          $('#simpleSpace')?.classList.toggle('lit', !!held.A);
+          horses.forEach((h) =>
+            h.el.classList.toggle('selected', Math.abs(angleDiff(angle, h.a)) < Math.PI / 7),
+          );
+        }
+        function angleDiff(a, b) {
+          return Math.atan2(Math.sin(a - b), Math.cos(a - b));
+        }
+        function setModeChoice(n) {
+          modeChoice = n;
+          $('#modeKeyboard').classList.toggle('on', n === 0);
+          $('#modeGamepad').classList.toggle('on', n === 1);
+          tone(n ? 440 : 330, 0.05, 'square', 0.025, 1);
+        }
+        function selectMode(mode) {
+          if (mode === 'gamepad' && !gamepad) {
+            $('#padModeStatus').textContent = '未检测到手柄，请先连接';
+            tone(90, 0.2, 'sawtooth', 0.05, 0.7);
+            return;
+          }
+          inputMode = mode;
+          state = 'READY';
+          keys = {};
+          held = {};
+          prevHeld = {};
+          ui.gate.classList.add('hidden');
+          ui.ready.classList.remove('hidden');
+          const pad = mode === 'gamepad';
+          $('#readyMode').textContent = pad
+            ? '游戏手柄模式 · 一局严格 60 秒'
+            : '电脑键盘模式 · 一局严格 60 秒';
+          $('#readyTitle').textContent = '旋转器盖，敲鼓收贝';
+          $('#lessonMove').innerHTML = pad
+            ? '推动 <span class="keys">左摇杆 / 十字键</span>，旋转器盖让金色箭头对准它。'
+            : '按键盘 <span class="keys">←　→</span>，旋转器盖让金色箭头对准它。';
+          $('#lessonAction').innerHTML = pad
+            ? '<span class="keys">A = 敲鼓</span><br>抓马、防御、退虎都使用它。'
+            : '<span class="keys">空格 = 敲鼓</span><br>抓马、防御、退虎都使用它。';
+          $('#readyWake').textContent = pad
+            ? '按 START 开始 · B 返回模式选择'
+            : '按 ENTER 开始 · ESC 返回模式选择';
+          $('#countHint').textContent = pad
+            ? '旋转器盖对准铜马 → 按 A 敲鼓'
+            : '左右旋转器盖 → 空格敲鼓';
+          $('#controlTitle').textContent = pad ? '游戏手柄 · 旋盖敲鼓' : '电脑键盘 · 旋盖敲鼓';
+          $('#simpleLeft').textContent = pad ? '◀' : '←';
+          $('#simpleRight').textContent = pad ? '▶' : '→';
+          $('#simpleSpace').textContent = pad ? 'A · 敲鼓' : '空　格 · 敲鼓';
+          $('#controlTip').innerHTML = pad
+            ? '<b>左摇杆/十字键</b>旋转古滇器盖<br><b>A 键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓'
+            : '<b>左右键</b>旋转古滇器盖<br><b>空格键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓';
+        }
+        function showMode() {
+          state = 'MODE';
+          keys = {};
+          held = {};
+          prevHeld = {};
+          ui.story.classList.add('hidden');
+          ui.register.classList.add('hidden');
+          ui.ready.classList.add('hidden');
+          ui.result.classList.add('hidden');
+          ui.gate.classList.remove('hidden');
+          ui.phase.textContent = '闭馆之后 · 请选择守器方式';
+        }
+        function updateModePad() {
+          const pads = navigator.getGamepads ? navigator.getGamepads() : [],
+            pad = [...pads].find(Boolean) || null;
+          gamepad = pad;
+          $('#padModeStatus').textContent = pad
+            ? '手柄已连接 · 可选择'
+            : '未检测到手柄（可稍后连接）';
+          const b = pad?.buttons || [],
+            x = pad?.axes?.[0] || 0,
+            raw = {
+              left: !!b[14]?.pressed || x < -0.65,
+              right: !!b[15]?.pressed || x > 0.65,
+              ok: !!b[0]?.pressed || !!b[9]?.pressed,
+            };
+          if (raw.left && !modePadPrev.left) setModeChoice(0);
+          if (raw.right && !modePadPrev.right) setModeChoice(1);
+          if (raw.ok && !modePadPrev.ok) selectMode(modeChoice ? 'gamepad' : 'keyboard');
+          modePadPrev = raw;
+        }
+        function startCountdown(now) {
+          ensureAudio();
+          state = 'COUNTDOWN';
+          countdownEnd = now + 3000;
+          ui.ready.classList.add('hidden');
+          ui.countdown.classList.remove('hidden');
+          ui.countNum.textContent = '3';
+          tone(330, 0.1, 'square', 0.06, 1);
+        }
+        function begin() {
+          ensureAudio();
+          state = 'PLAY';
+          ui.gate.classList.add('hidden');
+          ui.ready.classList.add('hidden');
+          ui.countdown.classList.add('hidden');
+          ui.result.classList.add('hidden');
+          score = displayScore = combo = maxCombo = successes = guards = tigerHits = energy = 0;
+          overdriveUntil = 0;
+          target = null;
+          scold = null;
+          scoldIndex = 0;
+          tiger = null;
+          tigerDone = false;
+          phase = -1;
+          selectedIndex = 0;
+          angle = horses[0].a;
+          startedAt = performance.now();
+          nextTargetAt = 0.55;
+          horses.forEach((h) => {
+            h.el.classList.remove('active', 'royal');
+            h.el.querySelector('.need').textContent = '';
+          });
+          $$('.lore').forEach((x) => x.classList.remove('on'));
+          lore('drum');
+          ui.timer.classList.remove('danger');
+          ui.disc.classList.remove('fever');
+          hideScene();
+          updateNumbers();
+          tone(392, 0.12, 'triangle', 0.07, 1.4);
+          setTimeout(() => tone(659, 0.16, 'triangle', 0.07, 1.2), 90);
+        }
+        function updateNumbers() {
+          displayScore += (score - displayScore) * 0.24;
+          if (Math.abs(score - displayScore) < 1) displayScore = score;
+          ui.shells.textContent = Math.round(displayScore).toLocaleString('zh-CN');
+          ui.combo.textContent = combo;
+          const elapsed = state === 'PLAY' ? (performance.now() - startedAt) / 1000 : 0,
+            active = overdriveUntil > elapsed;
+          ui.bank.textContent = active
+            ? `万贝归潮 ×3 · ${Math.max(0, overdriveUntil - elapsed).toFixed(1)}s`
+            : `铜鼓灵力 ${Math.round(energy)}%`;
+          ui.bank.classList.toggle('ready', energy >= 80 && !active);
+        }
+        function lore(name) {
+          document.querySelector(`[data-lore="${name}"]`)?.classList.add('on');
+        }
+        function setPhase(p) {
+          if (p === phase) return;
+          phase = p;
+          ui.phase.textContent =
+            p === 0
+              ? '闭馆之后 · 七马携贝苏醒'
+              : p === 1
+                ? '午夜迷踪 · 铜鼓追魂'
+                : '黎明之前 · 双虎攀器';
+          if (p === 1) flash('午夜已至 · 万贝迷踪！', false);
+          if (p === 2) {
+            lore('tiger');
+            flash('黎明将至 · 双虎攀器！', false);
+          }
+        }
+        function spawnTarget(elapsed) {
+          let idx = Math.floor(Math.random() * 7);
+          const life =
+              elapsed < 10 ? 3.2 : 2.15 - 0.75 * Math.min(1, elapsed / GAME_DURATION_SECONDS),
+            royal = elapsed >= 10 && Math.random() < 0.14,
+            el = horses[idx].el,
+            action = inputMode === 'gamepad' ? 'A' : '空格',
+            move = inputMode === 'gamepad' ? '左摇杆 / 十字键' : '← →';
+          target = { idx, need: 'A', born: elapsed, deadline: elapsed + life, life, royal };
+          el.classList.add('active');
+          el.classList.toggle('royal', royal);
+          el.style.setProperty('--life', life + 's');
+          el.querySelector('.need').className = 'need A';
+          el.querySelector('.need').textContent = action;
+          ui.prompt.innerHTML =
+            elapsed < 10
+              ? `守器教学：用 <b>${move}</b> 旋盖对准 ${idx + 1} 号铜马，再按 <b>${action}</b> 敲鼓`
+              : `追上 <b>${royal ? '载贝御马' : '逃贝铜马'} ${idx + 1}</b> · 按 <b>${action}</b> 敲鼓`;
+        }
+        function clearTarget() {
+          if (!target) return;
+          const el = horses[target.idx].el;
+          el.classList.remove('active', 'royal');
+          el.querySelector('.need').textContent = '';
+          target = null;
+        }
+        function tutorialMiss(elapsed, msg = '没关系，看准发光马再试') {
+          combo = 0;
+          clearTarget();
+          flash(msg, false);
+          tone(240, 0.13, 'triangle', 0.04, 0.8);
+          nextTargetAt = elapsed + 0.65;
+        }
+        function handleHorse(k, elapsed) {
+          if (!target) {
+            if (elapsed < 10) {
+              tutorialMiss(elapsed, '先等马位亮起，再按键');
+              return;
+            }
+            punish('空挥失仪！-300贝', 300);
+            return;
+          }
+          const aimed = Math.abs(angleDiff(angle, horses[target.idx].a)) < Math.PI / 7;
+          if (aimed && k === target.need) {
+            const origin = horses[target.idx].el.getBoundingClientRect(),
+              g = ui.game.getBoundingClientRect(),
+              quick = elapsed - target.born < 0.38,
+              base = 300 + (quick ? 200 : 0),
+              mult =
+                (combo >= 4 ? 2 : 1) * (elapsed < overdriveUntil ? 3 : 1) * (target.royal ? 2 : 1),
+              gain = base * mult;
+            successes++;
+            combo++;
+            energy = Math.min(100, energy + (quick ? 24 : 17));
+            maxCombo = Math.max(maxCombo, combo);
+            score += gain;
+            lore('horse');
+            if (combo >= 5) lore('hair');
+            burst(origin.left - g.left + origin.width / 2, origin.top - g.top + origin.height / 2);
+            rewardSound();
+            rumble(0.16, 0.7, 85);
+            flash(`${quick ? '神速！ ' : ''}${target.royal ? '御马！ ' : ''}+${gain}贝`, false);
+            clearTarget();
+            nextTargetAt = elapsed + 0.15;
+          } else if (elapsed < 10)
+            tutorialMiss(elapsed, aimed ? '按错了：请看马身字母' : '箭头还没对准发光马');
+          else punish(aimed ? '缰法错乱！-500贝' : '准星脱靶！-500贝', 500);
+        }
+        function punish(msg, amount) {
+          score = Math.max(0, score - amount);
+          combo = 0;
+          energy = Math.max(0, energy - 25);
+          ui.disc.classList.remove('fever');
+          clearTarget();
+          flash(msg, true);
+          rumble(1, 1, 520);
+          punishSound();
+          ui.game.classList.remove('shake');
+          void ui.game.offsetWidth;
+          ui.game.classList.add('shake');
+          ui.blood.classList.remove('on');
+          void ui.blood.offsetWidth;
+          ui.blood.classList.add('on');
+          ui.scene.style.backgroundImage = "url('./assets/images/scene-horses-tiger.jpg')";
+          ui.scene.classList.add('show');
+          ui.eventTitle.textContent = '器身裂纹漏贝';
+          ui.eventSub.textContent = '稳住圆盘 · 重整缰绳';
+          ui.eventFill.style.width = '100%';
+          setTimeout(() => {
+            if (!tiger && !scold) hideScene();
+          }, 650);
+          nextTargetAt = (performance.now() - startedAt) / 1000 + 0.36;
+        }
+        function flash(text, bad) {
+          ui.flash.textContent = text;
+          ui.flash.style.color = bad ? '#fff' : '#fff2a4';
+          ui.flash.classList.remove('pop');
+          void ui.flash.offsetWidth;
+          ui.flash.classList.add('pop');
+        }
+        function burst(x, y) {
+          for (let i = 0; i < 13; i++) {
+            const p = document.createElement('i');
+            p.className = 'shellParticle';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.setProperty('--mx', Math.random() * 150 - 75 + 'px');
+            p.style.setProperty('--my', -40 - Math.random() * 100 + 'px');
+            p.style.animationDelay = Math.random() * 0.08 + 's';
+            ui.particles.appendChild(p);
+            setTimeout(() => p.remove(), 850);
+          }
+        }
+        function beginScold(elapsed) {
+          const action = inputMode === 'gamepad' ? 'A' : '空格';
+          clearTarget();
+          scold = {
+            phase: 'warn',
+            start: elapsed,
+            attackAt: elapsed + 1.5,
+            endAt: elapsed + 3.5,
+            hold: 0,
+            maxHold: 0,
+          };
+          ui.scene.style.backgroundImage = "url('./assets/images/bg-main-front.jpg')";
+          ui.scene.classList.add('show');
+          ui.eventTitle.textContent = '御神主尊震怒';
+          ui.eventSub.textContent = `准备按住 ${action} · 跪地受令`;
+          ui.eventFill.style.width = '100%';
+          tone(174, 0.4, 'triangle', 0.09, 0.6);
+        }
+        function updateScold(elapsed, dt) {
+          if (!scold) return;
+          const action = inputMode === 'gamepad' ? 'A' : '空格';
+          if (scold.phase === 'warn') {
+            ui.eventFill.style.width = Math.max(0, ((scold.attackAt - elapsed) / 1.5) * 100) + '%';
+            if (elapsed >= scold.attackAt) {
+              scold.phase = 'attack';
+              ui.eventTitle.textContent = '雷 霆 训 斥';
+              ui.eventSub.textContent = `一直按住 ${action} 敲鼓御守！`;
+              ui.scene.style.animation = 'screenShake .16s infinite';
+              tone(78, 2, 'sawtooth', 0.11, 0.55);
+            }
+          } else {
+            if (held.A) {
+              scold.hold += dt;
+              scold.maxHold = Math.max(scold.maxHold, scold.hold);
+            } else scold.hold = 0;
+            ui.eventFill.style.width = Math.max(0, ((scold.endAt - elapsed) / 2) * 100) + '%';
+            if (elapsed >= scold.endAt) {
+              const ok = scold.maxHold >= 1.05 && held.A;
+              ui.scene.style.animation = '';
+              scold = null;
+              hideScene();
+              scoldIndex++;
+              if (ok) {
+                score += 800;
+                energy = Math.min(100, energy + 30);
+                guards++;
+                combo++;
+                maxCombo = Math.max(maxCombo, combo);
+                lore('jade');
+                lore('kneel');
+                rewardSound();
+                rumble(0.2, 0.8, 140);
+                flash('铜鼓御守成功 +800贝', false);
+              } else punish('主尊震怒！-500贝', 500);
+              nextTargetAt = elapsed + 0.38;
+            }
+          }
+        }
+        function beginTiger(elapsed) {
+          const action = inputMode === 'gamepad' ? 'A' : '空格';
+          clearTarget();
+          tiger = { start: elapsed, end: elapsed + 3 };
+          tigerDone = true;
+          ui.scene.style.backgroundImage = "url('./assets/images/scene-horses-tiger.jpg')";
+          ui.scene.classList.add('show');
+          ui.eventTitle.textContent = '双虎攀器夺贝';
+          ui.eventSub.textContent = `3秒狂按 ${action} 敲鼓震虎 · 每击 +100`;
+          ui.eventFill.style.width = '100%';
+          rumble(0.65, 0.8, 300);
+          tone(112, 0.4, 'sawtooth', 0.1, 1.7);
+        }
+        function updateTiger(elapsed) {
+          if (!tiger) return;
+          ui.eventFill.style.width = Math.max(0, ((tiger.end - elapsed) / 3) * 100) + '%';
+          if (pressed('A')) {
+            const gain = elapsed < overdriveUntil ? 300 : 100;
+            score += gain;
+            tigerHits++;
+            tigerSound();
+            rumble(0.08, 0.45, 55);
+            flash(`铜鼓震虎 ×${tigerHits}  +${gain}`, false);
+          }
+          if (elapsed >= tiger.end) {
+            tiger = null;
+            hideScene();
+            flash(`双虎坠器 · 连震 ${tigerHits} 次！`, false);
+            nextTargetAt = elapsed + 0.3;
+          }
+        }
+        function hideScene() {
+          ui.scene.classList.remove('show');
+          ui.scene.style.animation = '';
+          ui.eventTitle.textContent = '';
+          ui.eventSub.textContent = '';
+        }
+        function finish() {
+          state = 'RESULT';
+          clearTarget();
+          scold = null;
+          tiger = null;
+          hideScene();
+          ui.timer.textContent = '0.0';
+          ui.timer.classList.remove('danger');
+          displayScore = score;
+          updateNumbers();
+          const rank =
+            score >= 10000
+              ? 'SSS·古滇御神'
+              : score >= 6000
+                ? 'S·首席守器人'
+                : score >= 3000
+                  ? 'B·螺髻驯马师'
+                  : 'D·初醒守器学徒';
+          $('#rank').textContent = rank;
+          $('#finalScore').textContent = score.toLocaleString('zh-CN');
+          $('#maxCombo').textContent = maxCombo;
+          $('#successes').textContent = successes;
+          $('#guards').textContent = guards;
+          $('#tigerHits').textContent = tigerHits;
+          saveScore(rank);
+          ui.result.classList.remove('hidden');
+          tone(score >= 6000 ? 784 : 196, 0.5, 'triangle', 0.1, 1.5);
+        }
+        function gameUpdate(now, dt) {
+          const elapsed = (now - startedAt) / 1000,
+            remaining = Math.max(0, GAME_DURATION_SECONDS - elapsed),
+            action = inputMode === 'gamepad' ? 'A' : '空格',
+            move = inputMode === 'gamepad' ? '摇杆/十字键' : '← →';
+          ui.timer.textContent = remaining.toFixed(1);
+          ui.timer.classList.toggle('danger', remaining <= 10);
+          setPhase(elapsed < 20 ? 0 : elapsed < 40 ? 1 : 2);
+          if (elapsed < 10) ui.phase.textContent = '守器初醒 · 跟随金光旋盖敲鼓';
+          if (elapsed >= GAME_DURATION_SECONDS) {
+            finish();
+            return;
+          }
+          if (energy >= 100 && elapsed >= overdriveUntil) {
+            energy = 0;
+            overdriveUntil = elapsed + 5;
+            flash('万贝归潮 · 5秒×3！', false);
+            tone(220, 0.5, 'sawtooth', 0.09, 4);
+            rumble(0.45, 1, 350);
+            ui.disc.classList.add('fever');
+          }
+          if (scold) {
+            updateScold(elapsed, dt);
+            return;
+          }
+          if (tiger) {
+            updateTiger(elapsed);
+            return;
+          }
+          if (scoldIndex < 4 && elapsed >= [12, 24, 36, 48][scoldIndex]) {
+            beginScold(elapsed);
+            return;
+          }
+          if (!tigerDone && elapsed >= 40) {
+            beginTiger(elapsed);
+            return;
+          }
+          if (target && elapsed >= target.deadline) {
+            if (elapsed < 10) tutorialMiss(elapsed);
+            else punish('铜马携贝逃脱！-500贝', 500);
+            return;
+          }
+          if (pressed('A')) handleHorse('A', elapsed);
+          if (!target && elapsed >= nextTargetAt) spawnTarget(elapsed);
+          ui.disc.classList.toggle('fever', combo >= 5 || elapsed < overdriveUntil);
+          ui.prompt.innerHTML =
+            elapsed < overdriveUntil
+              ? `<b>万贝归潮 ×3！</b> · 继续按 ${action} 敲鼓`
+              : combo >= 5
+                ? '<b>螺髻疾驰 ×2！</b> · 继续追击铜马'
+                : target
+                  ? ui.prompt.innerHTML
+                  : `用 ${move} 旋盖对准金光，再按 ${action} 敲鼓`;
+        }
+        function loop(now) {
+          const dt = Math.min(0.05, (now - last) / 1000);
+          last = now;
+          if (state === 'MODE') {
+            updateModePad();
+            updateNumbers();
+            requestAnimationFrame(loop);
+            return;
+          }
+          prevHeld = held;
+          held = scanPad();
+          if (
+            state === 'PLAY' &&
+            inputMode === 'gamepad' &&
+            (pressed('LEFT') || pressed('RIGHT'))
+          ) {
+            selectedIndex = (selectedIndex + (pressed('RIGHT') ? 1 : 6)) % 7;
+            angle = horses[selectedIndex].a;
+          }
+          updatePadUI();
+          if (state === 'READY' && inputMode === 'gamepad' && pressed('B')) showMode();
+          else if (state === 'READY' && pressed('START')) startCountdown(now);
+          else if (state === 'COUNTDOWN') {
+            const left = countdownEnd - now;
+            if (left <= 0) begin();
+            else ui.countNum.textContent = Math.ceil(left / 1000);
+          } else if (state === 'RESULT' && (pressed('START') || pressed('A'))) begin();
+          else if (state === 'PLAY') gameUpdate(now, dt);
+          updateNumbers();
+          requestAnimationFrame(loop);
+        }
+        addEventListener('keydown', (e) => {
+          if (state === 'STORY') {
+            if (e.code === 'Enter' && !e.repeat) {
+              e.preventDefault();
+              advanceStory();
+            }
+            ensureAudio();
+            return;
+          }
+          if (state === 'NAME') {
+            if (e.code === 'Enter') {
+              e.preventDefault();
+              registerPlayer();
+            }
+            return;
+          }
+          if (['ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+          if (state === 'MODE') {
+            if (!e.repeat && (e.code === 'ArrowLeft' || e.code === 'ArrowRight'))
+              setModeChoice(e.code === 'ArrowRight' ? 1 : 0);
+            else if (e.code === 'Enter') selectMode(modeChoice ? 'gamepad' : 'keyboard');
+            ensureAudio();
+            return;
+          }
+          if (state === 'READY' && inputMode === 'keyboard' && e.code === 'Escape') {
+            showMode();
+            return;
+          }
+          keys[e.code] = true;
+          if (
+            state === 'PLAY' &&
+            inputMode === 'keyboard' &&
+            !e.repeat &&
+            (e.code === 'ArrowLeft' || e.code === 'ArrowRight')
+          ) {
+            selectedIndex = (selectedIndex + (e.code === 'ArrowRight' ? 1 : 6)) % 7;
+            angle = horses[selectedIndex].a;
+            tone(300 + selectedIndex * 28, 0.045, 'square', 0.025, 1.05);
+          }
+          ensureAudio();
+        });
+        addEventListener('keyup', (e) => {
+          keys[e.code] = false;
+        });
+        addEventListener('blur', () => {
+          keys = {};
+        });
+        addEventListener(
+          'mousedown',
+          (e) => {
+            if (e.target !== ui.nameInput) e.preventDefault();
+          },
+          true,
+        );
+        addEventListener(
+          'click',
+          (e) => {
+            if (e.target !== ui.nameInput) e.preventDefault();
+          },
+          true,
+        );
+        addEventListener('contextmenu', (e) => e.preventDefault());
+        requestAnimationFrame(loop);
+      })();
+    </script>
+  </body>
+</html>

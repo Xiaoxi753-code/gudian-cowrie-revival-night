@@ -1,0 +1,7 @@
+node_modules/
+.trae-html-share-packages/
+archive/*.zip
+*.log
+.DS_Store
+Thumbs.db
+
