@@ -81,6 +81,27 @@
       .hidden {
         display: none !important;
       }
+      #audioBadge {
+        position: absolute;
+        z-index: 160;
+        right: 1.5%;
+        bottom: 1.4%;
+        pointer-events: auto;
+        padding: 0.65% 1.2%;
+        border: 1px solid #9e3e33;
+        border-radius: 99px;
+        background: rgba(25, 5, 4, 0.94);
+        color: #ffaaa1;
+        font: 800 clamp(10px, 0.75vw, 15px) 'Microsoft YaHei';
+        letter-spacing: 0.06em;
+        box-shadow: 0 0 16px rgba(255, 60, 56, 0.2);
+      }
+      #audioBadge.on {
+        border-color: #49d795;
+        background: rgba(3, 24, 15, 0.92);
+        color: #7df2b5;
+        box-shadow: 0 0 16px rgba(85, 214, 161, 0.25);
+      }
       #hud {
         position: absolute;
         z-index: 30;
@@ -1065,6 +1086,38 @@
         color: #fff0bc;
         font-size: 1.4em;
       }
+      #settlement {
+        margin: 2% 0 1%;
+        padding: 2.2% 3%;
+        border: 1px solid rgba(255, 201, 77, 0.26);
+        background: rgba(255, 201, 77, 0.045);
+      }
+      .settlementTitle {
+        margin-bottom: 1.6%;
+        color: var(--gold);
+        font-size: clamp(11px, 0.85vw, 16px);
+        font-weight: 900;
+        letter-spacing: 0.16em;
+      }
+      .settlementGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 7%;
+        font-size: clamp(10px, 0.75vw, 14px);
+        color: #b8ad8e;
+      }
+      .settlementGrid span {
+        display: flex;
+        justify-content: space-between;
+        gap: 1em;
+      }
+      .settlementGrid b {
+        color: #fff0bc;
+        white-space: nowrap;
+      }
+      .settlementGrid .loss b {
+        color: #ff8178;
+      }
       #restart {
         color: white;
         font-size: clamp(12px, 0.95vw, 18px);
@@ -1236,6 +1289,7 @@
   </head>
   <body>
     <main id="game" aria-label="器盖上的复活夜：古滇万贝迷踪">
+      <button id="audioBadge" type="button">🔇 点击画面或按键盘开启声音</button>
       <header id="hud">
         <div class="hudBox" id="brand">
           <h1>《器盖上的复活夜：古滇万贝迷踪》</h1>
@@ -1386,6 +1440,15 @@
               ><span>主尊御守<br /><b id="guards">0</b></span
               ><span>铜虎击退<br /><b id="tigerHits">0</b></span>
             </div>
+            <div id="settlement">
+              <div class="settlementTitle">本局海贝账簿</div>
+              <div class="settlementGrid">
+                <span>铜马追回 <b id="horseShells">+0 贝</b></span>
+                <span>主尊赏赐 <b id="guardShells">+0 贝</b></span>
+                <span>铜鼓震虎 <b id="tigerShells">+0 贝</b></span>
+                <span class="loss">器身漏贝 <b id="lostShells">-0 贝</b></span>
+              </div>
+            </div>
             <div class="leaderTitle">万贝守器榜 · 本机前五名</div>
             <div id="leaderboard"></div>
             <div class="optional">晨光照入展厅，一切重新凝固。只有器盖中的海贝，记得这个夜晚。</div>
@@ -1437,6 +1500,7 @@
           flash: $('#flashText'),
           blood: $('#blood'),
           particles: $('#particles'),
+          audioBadge: $('#audioBadge'),
         };
         const keyMap = { Enter: 'START', Space: 'A' };
         const STORAGE_KEYS = Object.freeze({
@@ -1494,6 +1558,10 @@
           successes = 0,
           guards = 0,
           tigerHits = 0,
+          horseShells = 0,
+          guardShells = 0,
+          tigerShells = 0,
+          lostShells = 0,
           energy = 0,
           overdriveUntil = 0,
           target = null,
@@ -1507,6 +1575,8 @@
           prevHeld = {},
           keys = {},
           audio = null,
+          audioMaster = null,
+          audioUnlocked = false,
           music = null,
           musicTimer = null,
           musicStep = 0;
@@ -1627,12 +1697,41 @@
         }
         renderStory();
         function ensureAudio() {
-          if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
-          if (audio.state === 'suspended') audio.resume().catch(() => {});
+          if (!audio) {
+            const AudioEngine = window.AudioContext || window.webkitAudioContext;
+            if (!AudioEngine) return;
+            audio = new AudioEngine();
+            audioMaster = audio.createGain();
+            audioMaster.gain.value = 0.78;
+            audioMaster.connect(audio.destination);
+            audio.addEventListener('statechange', updateAudioBadge);
+          }
+        }
+        function updateAudioBadge() {
+          audioUnlocked = audio?.state === 'running';
+          ui.audioBadge.classList.toggle('on', audioUnlocked);
+          ui.audioBadge.textContent = audioUnlocked
+            ? '🔊 声音已开启 · 音量 78%'
+            : '🔇 点击画面或按键盘开启声音';
+        }
+        async function unlockAudio() {
+          ensureAudio();
+          if (!audio) return;
+          const wasUnlocked = audioUnlocked;
+          try {
+            await audio.resume();
+          } catch (e) {}
+          updateAudioBadge();
+          if (audioUnlocked && !wasUnlocked) {
+            tone(523.25, 0.12, 'triangle', 0.07, 1.5);
+            setTimeout(() => tone(783.99, 0.16, 'sine', 0.055, 1.08), 70);
+            if (state === 'PLAY' && !music) startMusic();
+          }
         }
         function tone(freq, dur, type = 'sine', gain = 0.08, slide = 1) {
           try {
             ensureAudio();
+            if (!audio || audio.state !== 'running') return;
             const t = audio.currentTime,
               o = audio.createOscillator(),
               g = audio.createGain();
@@ -1641,7 +1740,7 @@
             o.frequency.exponentialRampToValueAtTime(Math.max(35, freq * slide), t + dur);
             g.gain.setValueAtTime(gain, t);
             g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-            o.connect(g).connect(audio.destination);
+            o.connect(g).connect(audioMaster || audio.destination);
             o.start(t);
             o.stop(t + dur);
           } catch (e) {}
@@ -1649,6 +1748,7 @@
         function startMusic() {
           try {
             ensureAudio();
+            if (!audio || audio.state !== 'running') return;
             stopMusic(0.05);
             const now = audio.currentTime,
               master = audio.createGain(),
@@ -1677,7 +1777,7 @@
             lowDrone.connect(lowGain).connect(filter);
             highDrone.connect(highGain).connect(filter);
             lfo.connect(lfoGain).connect(filter.frequency);
-            filter.connect(master).connect(audio.destination);
+            filter.connect(master).connect(audioMaster || audio.destination);
             [lowDrone, highDrone, lfo].forEach((node) => node.start(now));
             music = { master, voices: [lowDrone, highDrone, lfo] };
             musicStep = 0;
@@ -1890,7 +1990,10 @@
             };
           if (raw.left && !modePadPrev.left) setModeChoice(0);
           if (raw.right && !modePadPrev.right) setModeChoice(1);
-          if (raw.ok && !modePadPrev.ok) selectMode(modeChoice ? 'gamepad' : 'keyboard');
+          if (raw.ok && !modePadPrev.ok) {
+            unlockAudio();
+            selectMode(modeChoice ? 'gamepad' : 'keyboard');
+          }
           modePadPrev = raw;
         }
         function updateIntroPad() {
@@ -1900,7 +2003,7 @@
             raw = { ok: !!buttons[0]?.pressed || !!buttons[9]?.pressed };
           gamepad = pad;
           if (raw.ok && !introPadPrev.ok) {
-            ensureAudio();
+            unlockAudio();
             if (state === 'STORY') advanceStory();
             else if (state === 'NAME') {
               if (!ui.nameInput.value.trim()) ui.nameInput.value = '手柄守器人';
@@ -1928,6 +2031,7 @@
           ui.countdown.classList.add('hidden');
           ui.result.classList.add('hidden');
           score = displayScore = combo = maxCombo = successes = guards = tigerHits = energy = 0;
+          horseShells = guardShells = tigerShells = lostShells = 0;
           overdriveUntil = 0;
           target = null;
           scold = null;
@@ -2045,6 +2149,7 @@
             energy = Math.min(100, energy + (quick ? 24 : 17));
             maxCombo = Math.max(maxCombo, combo);
             score += gain;
+            horseShells += gain;
             lore('horse');
             if (combo >= 5) lore('hair');
             burst(origin.left - g.left + origin.width / 2, origin.top - g.top + origin.height / 2);
@@ -2058,7 +2163,9 @@
           else punish(aimed ? '缰法错乱！-500贝' : '准星脱靶！-500贝', 500);
         }
         function punish(msg, amount) {
+          const scoreBeforePenalty = score;
           score = Math.max(0, score - amount);
+          lostShells += scoreBeforePenalty - score;
           combo = 0;
           energy = Math.max(0, energy - 25);
           ui.disc.classList.remove('fever');
@@ -2147,6 +2254,7 @@
               scoldIndex++;
               if (ok) {
                 score += 800;
+                guardShells += 800;
                 energy = Math.min(100, energy + 30);
                 guards++;
                 combo++;
@@ -2180,6 +2288,7 @@
           if (pressed('A')) {
             const gain = elapsed < overdriveUntil ? 300 : 100;
             score += gain;
+            tigerShells += gain;
             tigerHits++;
             tigerSound();
             rumble(0.08, 0.45, 55);
@@ -2224,6 +2333,10 @@
           $('#successes').textContent = successes;
           $('#guards').textContent = guards;
           $('#tigerHits').textContent = tigerHits;
+          $('#horseShells').textContent = `+${horseShells.toLocaleString('zh-CN')} 贝`;
+          $('#guardShells').textContent = `+${guardShells.toLocaleString('zh-CN')} 贝`;
+          $('#tigerShells').textContent = `+${tigerShells.toLocaleString('zh-CN')} 贝`;
+          $('#lostShells').textContent = `-${lostShells.toLocaleString('zh-CN')} 贝`;
           saveScore(rank);
           $('#restart').classList.add('locked');
           $('#restart').textContent = '结算封存中 · 5秒后可开启下一局';
@@ -2343,6 +2456,7 @@
           requestAnimationFrame(loop);
         }
         addEventListener('keydown', (e) => {
+          unlockAudio();
           if (state === 'STORY') {
             if (e.code === 'Enter' && !e.repeat) {
               e.preventDefault();
@@ -2389,6 +2503,7 @@
         addEventListener('blur', () => {
           keys = {};
         });
+        addEventListener('pointerdown', unlockAudio, { passive: true });
         addEventListener(
           'mousedown',
           (e) => {
