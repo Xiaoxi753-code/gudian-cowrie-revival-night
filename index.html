@@ -86,6 +86,11 @@
           0 0 0 2px rgba(255, 68, 46, 0.48),
           0 0 42px rgba(255, 48, 28, 0.24);
       }
+      #game.easyMode #discWrap {
+        box-shadow:
+          0 0 0 2px rgba(85, 214, 161, 0.32),
+          0 0 34px rgba(85, 214, 161, 0.16);
+      }
       .hidden {
         display: none !important;
       }
@@ -891,6 +896,9 @@
         width: 80%;
         padding: 3% 5%;
       }
+      #difficulty .modeCards {
+        grid-template-columns: repeat(3, 1fr);
+      }
       #difficultyStatus {
         min-height: 1.6em;
         margin-top: 1.4%;
@@ -1444,9 +1452,15 @@
           <div class="bigTitle">选择今夜的器灵强度</div>
           <div class="storyLead">第二关由当前守器人最高分解锁，同一姓名只保留一条最佳成绩。</div>
           <div class="modeCards">
+            <div class="modeCard" id="difficultyEasy">
+              <div class="modeIcon">幼</div>
+              <div class="modeName">亲子启蒙</div>
+              <div class="modeKeys">慢速铜马 · 轻松练习</div>
+              <div class="modeStatus">3～6岁友好 · 失误不扣贝</div>
+            </div>
             <div class="modeCard on" id="difficultyNormal">
               <div class="modeIcon">壹</div>
-              <div class="modeName">第一关 · 守器初醒</div>
+              <div class="modeName">中间难度 · 守器初醒</div>
               <div class="modeKeys">宽松锁马 · 四次训斥 · 标准奖惩</div>
               <div class="modeStatus">适合熟悉器盖与七马槽位</div>
             </div>
@@ -1609,7 +1623,7 @@
           inputMode = 'keyboard',
           modeChoice = 0,
           difficulty = 'normal',
-          difficultyChoice = 0,
+          difficultyChoice = 1,
           hardUnlocked = false,
           unlockedHardThisRun = false,
           gamepad = null,
@@ -2069,15 +2083,24 @@
         }
         function setDifficultyChoice(choice) {
           difficultyChoice = choice;
-          $('#difficultyNormal').classList.toggle('on', choice === 0);
-          $('#difficultyHard').classList.toggle('on', choice === 1);
+          $('#difficultyEasy').classList.toggle('on', choice === 0);
+          $('#difficultyNormal').classList.toggle('on', choice === 1);
+          $('#difficultyHard').classList.toggle('on', choice === 2);
           $('#difficultyStatus').textContent =
-            choice === 1 && !hardUnlocked
+            choice === 2 && !hardUnlocked
               ? `尚未解锁 · ${playerName} 的最高分需达到 ${HARD_MODE_UNLOCK_SCORE.toLocaleString('zh-CN')} 贝`
-              : choice === 1
+              : choice === 2
                 ? '狂潮已解锁 · 高风险、高倍率、五次雷霆训斥'
-                : '标准节奏 · 适合冲击 30,000 贝解锁第二关';
-          tone(choice ? 466.16 : 349.23, 0.06, 'triangle', 0.03, 1.08);
+                : choice === 0
+                  ? '亲子启蒙 · 目标更慢、失误不扣贝，适合 3～6 岁小朋友'
+                  : '中间难度 · 标准节奏，适合冲击 30,000 贝解锁第二关';
+          tone(
+            choice === 0 ? 293.66 : choice === 1 ? 349.23 : 466.16,
+            0.06,
+            'triangle',
+            0.03,
+            1.08,
+          );
         }
         function showDifficulty() {
           state = 'DIFFICULTY';
@@ -2092,26 +2115,35 @@
           ui.result.classList.add('hidden');
           ui.difficulty.classList.remove('hidden');
           ui.phase.textContent = '闭馆之后 · 请选择守器关卡';
-          setDifficultyChoice(hardUnlocked && difficulty === 'hard' ? 1 : 0);
+          setDifficultyChoice(
+            difficulty === 'easy' ? 0 : hardUnlocked && difficulty === 'hard' ? 2 : 1,
+          );
         }
         function selectDifficulty() {
-          if (difficultyChoice === 1 && !hardUnlocked) {
+          if (difficultyChoice === 2 && !hardUnlocked) {
             $('#difficultyStatus').textContent = '第二关尚未解锁：先在第一关达到 30,000 贝';
             tone(92, 0.24, 'sawtooth', 0.06, 0.65);
             return;
           }
-          difficulty = difficultyChoice === 1 ? 'hard' : 'normal';
+          difficulty = difficultyChoice === 0 ? 'easy' : difficultyChoice === 2 ? 'hard' : 'normal';
           state = 'READY';
           ui.difficulty.classList.add('hidden');
           ui.ready.classList.remove('hidden');
           const hard = difficulty === 'hard';
+          const easy = difficulty === 'easy';
           $('#readyMode').textContent = `${inputMode === 'gamepad' ? '游戏手柄' : '电脑键盘'} · ${
-            hard ? '第二关「万贝狂潮」' : '第一关「守器初醒」'
+            easy ? '亲子启蒙' : hard ? '第二关「万贝狂潮」' : '中间难度「守器初醒」'
           } · 60 秒`;
-          $('#readyTitle').textContent = hard ? '狂暴御马苏醒，守住万贝！' : '旋转器盖，敲鼓收贝';
-          $('#readyDifficultyTip').innerHTML = hard
-            ? '第二关：奖励 <b>×1.5</b>，但御马更快、训斥更多、漏贝惩罚更重。'
-            : '第一关：天亮前追回越多海贝越好，达到 <b>30,000 贝</b>解锁第二关。';
+          $('#readyTitle').textContent = easy
+            ? '慢慢旋盖，开心收贝！'
+            : hard
+              ? '狂暴御马苏醒，守住万贝！'
+              : '旋转器盖，敲鼓收贝';
+          $('#readyDifficultyTip').innerHTML = easy
+            ? '亲子启蒙：铜马会慢慢出现，失误不扣贝，先学会对准再敲鼓。'
+            : hard
+              ? '第二关：奖励 <b>×1.5</b>，但御马更快、训斥更多、漏贝惩罚更重。'
+              : '中间难度：天亮前追回越多海贝越好，达到 <b>30,000 贝</b>解锁第二关。';
           tone(hard ? 659.25 : 523.25, 0.16, 'triangle', 0.065, 1.3);
         }
         function showMode() {
@@ -2181,6 +2213,7 @@
           state = 'PLAY';
           startMusic();
           ui.game.classList.toggle('hardMode', difficulty === 'hard');
+          ui.game.classList.toggle('easyMode', difficulty === 'easy');
           ui.gate.classList.add('hidden');
           ui.ready.classList.add('hidden');
           ui.countdown.classList.add('hidden');
@@ -2199,7 +2232,7 @@
           selectedIndex = 0;
           angle = horses[0].a;
           startedAt = performance.now();
-          nextTargetAt = difficulty === 'hard' ? 0.35 : 0.55;
+          nextTargetAt = difficulty === 'hard' ? 0.35 : difficulty === 'easy' ? 0.9 : 0.55;
           horses.forEach((h) => {
             h.el.classList.remove('active', 'royal');
             h.el.querySelector('.need').textContent = '';
@@ -2253,6 +2286,7 @@
         function spawnTarget(elapsed) {
           let idx = Math.floor(Math.random() * 7);
           const hard = difficulty === 'hard',
+            easy = difficulty === 'easy',
             life = hard
               ? elapsed < 10
                 ? 2.55
@@ -2261,14 +2295,22 @@
                   : elapsed < 40
                     ? 2
                     : 1.75
-              : elapsed < 10
-                ? 3.6
-                : elapsed < 20
-                  ? 3
+              : easy
+                ? elapsed < 20
+                  ? 5.8
                   : elapsed < 40
-                    ? 2.7
-                    : 2.5,
-            royal = elapsed >= (hard ? 4 : 10) && Math.random() < (hard ? 0.25 : 0.14),
+                    ? 5.2
+                    : 4.8
+                : elapsed < 10
+                  ? 3.6
+                  : elapsed < 20
+                    ? 3
+                    : elapsed < 40
+                      ? 2.7
+                      : 2.5,
+            royal =
+              elapsed >= (hard ? 4 : easy ? 20 : 10) &&
+              Math.random() < (hard ? 0.25 : easy ? 0.05 : 0.14),
             el = horses[idx].el,
             action = inputMode === 'gamepad' ? 'A' : '空格',
             move = inputMode === 'gamepad' ? '左摇杆 / 十字键' : '← →';
@@ -2280,7 +2322,7 @@
           el.querySelector('.need').textContent = action;
           tone(92 + idx * 9, royal ? 0.16 : 0.1, 'triangle', royal ? 0.035 : 0.018, 1.45);
           ui.prompt.innerHTML =
-            elapsed < 10 && !hard
+            elapsed < 10 && !hard && !easy
               ? `守器教学：用 <b>${move}</b> 旋盖对准 ${idx + 1} 号铜马，再按 <b>${action}</b> 敲鼓`
               : `追上 <b>${royal ? '载贝御马' : '逃贝铜马'} ${idx + 1}</b> · 按 <b>${action}</b> 敲鼓`;
         }
@@ -2300,7 +2342,7 @@
         }
         function handleHorse(k, elapsed) {
           if (!target) {
-            if (elapsed < 10 && difficulty !== 'hard') {
+            if (difficulty === 'easy' || (elapsed < 10 && difficulty !== 'hard')) {
               tutorialMiss(elapsed, '先等马位亮起，再按键');
               return;
             }
@@ -2315,7 +2357,9 @@
               base = 300 + (quick ? 200 : 0),
               mult =
                 (combo >= 4 ? 2 : 1) * (elapsed < overdriveUntil ? 3 : 1) * (target.royal ? 2 : 1),
-              gain = Math.round(base * mult * (difficulty === 'hard' ? 1.5 : 1));
+              gain = Math.round(
+                base * mult * (difficulty === 'hard' ? 1.5 : difficulty === 'easy' ? 0.9 : 1),
+              );
             successes++;
             combo++;
             if (elapsed <= chainWindowUntil) chainCount++;
@@ -2332,7 +2376,7 @@
             rumble(0.16, 0.7, 85);
             flash(`${quick ? '神速！ ' : ''}${target.royal ? '御马！ ' : ''}+${gain}贝`, false);
             if (chainCount >= 3) {
-              const chainBonus = difficulty === 'hard' ? 900 : 600;
+              const chainBonus = difficulty === 'hard' ? 900 : difficulty === 'easy' ? 300 : 600;
               score += chainBonus;
               horseShells += chainBonus;
               chainCount = 0;
@@ -2342,12 +2386,20 @@
               flash(`贝潮连锁完成！ +${chainBonus}贝`, false);
             }
             clearTarget();
-            nextTargetAt = elapsed + (difficulty === 'hard' ? 0.12 : 0.25);
-          } else if (elapsed < 10 && difficulty !== 'hard')
+            nextTargetAt =
+              elapsed + (difficulty === 'hard' ? 0.12 : difficulty === 'easy' ? 0.45 : 0.25);
+          } else if (difficulty === 'easy' || (elapsed < 10 && difficulty !== 'hard'))
             tutorialMiss(elapsed, aimed ? '按错了：请看马身字母' : '箭头还没对准发光马');
           else punish(aimed ? '缰法错乱！-500贝' : '准星脱靶！-500贝', 500);
         }
         function punish(msg, amount) {
+          if (difficulty === 'easy') {
+            combo = 0;
+            clearTarget();
+            flash('亲子练习 · 再试一次！', false);
+            tone(220, 0.12, 'triangle', 0.035, 0.8);
+            return;
+          }
           if (difficulty === 'hard') amount = Math.round((amount * 1.4) / 100) * 100;
           msg = msg.replace(/-\d+贝/, `-${amount}贝`);
           const scoreBeforePenalty = score;
@@ -2398,7 +2450,7 @@
         }
         function beginScold(elapsed) {
           const action = inputMode === 'gamepad' ? 'A' : '空格';
-          const requiredHits = difficulty === 'hard' ? 14 : 10;
+          const requiredHits = difficulty === 'hard' ? 14 : difficulty === 'easy' ? 6 : 10;
           clearTarget();
           scold = {
             phase: 'warn',
@@ -2450,7 +2502,7 @@
               hideScene();
               scoldIndex++;
               if (ok) {
-                const guardGain = difficulty === 'hard' ? 1200 : 800;
+                const guardGain = difficulty === 'hard' ? 1200 : difficulty === 'easy' ? 500 : 800;
                 score += guardGain;
                 guardShells += guardGain;
                 energy = Math.min(100, energy + 30);
@@ -2471,7 +2523,7 @@
           const action = inputMode === 'gamepad' ? 'A' : '空格';
           clearTarget();
           const duration = difficulty === 'hard' ? 4 : 3,
-            hitReward = difficulty === 'hard' ? 150 : 100;
+            hitReward = difficulty === 'hard' ? 150 : difficulty === 'easy' ? 80 : 100;
           tiger = { start: elapsed, end: elapsed + duration, duration, hitReward };
           tigerDone = true;
           ui.scene.style.backgroundImage = "url('./assets/images/scene-horses-tiger.jpg')";
@@ -2580,7 +2632,11 @@
           setPhase(elapsed < 20 ? 0 : elapsed < 40 ? 1 : 2);
           if (elapsed < 10)
             ui.phase.textContent =
-              difficulty === 'hard' ? '万贝狂潮 · 狂暴御马连续来袭' : '守器初醒 · 跟随金光旋盖敲鼓';
+              difficulty === 'hard'
+                ? '万贝狂潮 · 狂暴御马连续来袭'
+                : difficulty === 'easy'
+                  ? '亲子启蒙 · 慢慢对准，轻松收贝'
+                  : '守器初醒 · 跟随金光旋盖敲鼓';
           if (elapsed >= GAME_DURATION_SECONDS) {
             finish();
             return;
@@ -2601,7 +2657,12 @@
             updateTiger(elapsed);
             return;
           }
-          const scoldTimes = difficulty === 'hard' ? [10, 20, 30, 40, 50] : [12, 24, 36, 48];
+          const scoldTimes =
+            difficulty === 'hard'
+              ? [10, 20, 30, 40, 50]
+              : difficulty === 'easy'
+                ? [22, 44]
+                : [12, 24, 36, 48];
           if (scoldIndex < scoldTimes.length && elapsed >= scoldTimes[scoldIndex]) {
             beginScold(elapsed);
             return;
@@ -2611,7 +2672,8 @@
             return;
           }
           if (target && elapsed >= target.deadline) {
-            if (elapsed < 10 && difficulty !== 'hard') tutorialMiss(elapsed);
+            if (difficulty === 'easy' || (elapsed < 10 && difficulty !== 'hard'))
+              tutorialMiss(elapsed);
             else punish('铜马携贝逃脱！-500贝', 500);
             return;
           }
@@ -2646,7 +2708,7 @@
           prevHeld = held;
           held = scanPad();
           if (state === 'DIFFICULTY' && (pressed('LEFT') || pressed('RIGHT')))
-            setDifficultyChoice(pressed('RIGHT') ? 1 : 0);
+            setDifficultyChoice((difficultyChoice + (pressed('RIGHT') ? 1 : 2)) % 3);
           if (
             state === 'PLAY' &&
             inputMode === 'gamepad' &&
@@ -2701,7 +2763,7 @@
           if (state === 'DIFFICULTY') {
             if (!e.repeat && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
               e.preventDefault();
-              setDifficultyChoice(e.code === 'ArrowRight' ? 1 : 0);
+              setDifficultyChoice((difficultyChoice + (e.code === 'ArrowRight' ? 1 : 2)) % 3);
             } else if (e.code === 'Enter' && !e.repeat) {
               e.preventDefault();
               selectDifficulty();

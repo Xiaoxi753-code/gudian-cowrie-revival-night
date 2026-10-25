@@ -22,7 +22,7 @@ STORY → NAME → MODE → DIFFICULTY → READY → COUNTDOWN → PLAY → RESU
 - `STORY`：四幕剧情及积分说明。
 - `NAME`：登记守器人姓名。
 - `MODE`：选择键盘或手柄。
-- `DIFFICULTY`：选择已解锁的第一关或第二关。
+- `DIFFICULTY`：选择亲子启蒙、守器初醒或已解锁的万贝狂潮。
 - `READY`：展示当前模式的两键说明。
 - `COUNTDOWN`：三秒倒数。
 - `PLAY`：严格 60 秒游戏循环。
