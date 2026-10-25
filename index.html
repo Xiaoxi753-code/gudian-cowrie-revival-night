@@ -1335,7 +1335,7 @@
             <div class="modeCard" id="modeGamepad">
               <div class="modeIcon">◖▰◗</div>
               <div class="modeName">游戏手柄模式</div>
-              <div class="modeKeys">左摇杆/十字键旋盖　·　A 敲鼓</div>
+              <div class="modeKeys">摇杆自动吸附铜马　·　A 敲鼓</div>
               <div class="modeStatus" id="padModeStatus">正在检测手柄…</div>
             </div>
           </div>
@@ -1442,8 +1442,8 @@
         const GAME_DURATION_SECONDS = 60;
         const MAX_PLAYER_NAME_LENGTH = 12;
         const MAX_SAVED_SCORES = 20;
-        const GAMEPAD_STICK_DEADZONE = 0.48;
-        const GAMEPAD_AIM_SPEED_RADIANS = 3.2;
+        const GAMEPAD_STICK_DEADZONE = 0.36;
+        const GAMEPAD_SNAP_HYSTERESIS_RADIANS = 0.1;
         // Static narrative content. UI flow is controlled by the state machine below.
         const storyPages = [
           {
@@ -1476,7 +1476,6 @@
           gamepad = null,
           modePadPrev = {},
           angle = -Math.PI / 2,
-          stickAimAngle = null,
           selectedIndex = 0,
           last = performance.now(),
           startedAt = 0,
@@ -1684,10 +1683,18 @@
             h.LEFT = !!b[14]?.pressed;
             h.RIGHT = !!b[15]?.pressed;
             const x = gamepad.axes?.[0] || 0,
-              y = gamepad.axes?.[1] || 0;
-            stickAimAngle = Math.hypot(x, y) > GAMEPAD_STICK_DEADZONE ? Math.atan2(y, x) : null;
+              y = gamepad.axes?.[1] || 0,
+              magnitude = Math.hypot(x, y);
+            if (magnitude > GAMEPAD_STICK_DEADZONE && !h.LEFT && !h.RIGHT) {
+              const stickAngle = Math.atan2(y, x);
+              const snappedIndex = nearestHorseIndex(stickAngle);
+              const movedPastBoundary =
+                Math.abs(angleDiff(stickAngle, horses[selectedIndex].a)) >
+                Math.PI / 7 + GAMEPAD_SNAP_HYSTERESIS_RADIANS;
+              if (snappedIndex === selectedIndex || movedPastBoundary) selectedIndex = snappedIndex;
+              angle = horses[selectedIndex].a;
+            }
           } else if (inputMode === 'keyboard') {
-            stickAimAngle = null;
             Object.entries(keyMap).forEach(([k, v]) => {
               if (keys[k]) h[v] = true;
             });
@@ -1715,6 +1722,16 @@
         function angleDiff(a, b) {
           return Math.atan2(Math.sin(a - b), Math.cos(a - b));
         }
+        function nearestHorseIndex(targetAngle) {
+          return horses.reduce(
+            (best, horse, index) =>
+              Math.abs(angleDiff(targetAngle, horse.a)) <
+              Math.abs(angleDiff(targetAngle, horses[best].a))
+                ? index
+                : best,
+            0,
+          );
+        }
         function setModeChoice(n) {
           modeChoice = n;
           $('#modeKeyboard').classList.toggle('on', n === 0);
@@ -1740,7 +1757,7 @@
             : '电脑键盘模式 · 一局严格 60 秒';
           $('#readyTitle').textContent = '旋转器盖，敲鼓收贝';
           $('#lessonMove').innerHTML = pad
-            ? '推动 <span class="keys">左摇杆 / 十字键</span>，旋转器盖让金色箭头对准它。'
+            ? '轻推 <span class="keys">左摇杆 / 十字键</span>，金色箭头会自动吸附最近的铜马。'
             : '按键盘 <span class="keys">←　→</span>，旋转器盖让金色箭头对准它。';
           $('#lessonAction').innerHTML = pad
             ? '<span class="keys">A = 敲鼓</span><br>抓马、防御、退虎都使用它。'
@@ -1756,7 +1773,7 @@
           $('#simpleRight').textContent = pad ? '▶' : '→';
           $('#simpleSpace').textContent = pad ? 'A · 敲鼓' : '空　格 · 敲鼓';
           $('#controlTip').innerHTML = pad
-            ? '<b>左摇杆/十字键</b>旋转古滇器盖<br><b>A 键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓'
+            ? '<b>左摇杆/十字键</b>选择铜马，箭头自动吸附<br><b>A 键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓'
             : '<b>左右键</b>旋转古滇器盖<br><b>空格键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓';
         }
         function showMode() {
@@ -1863,8 +1880,7 @@
         }
         function spawnTarget(elapsed) {
           let idx = Math.floor(Math.random() * 7);
-          const life =
-              elapsed < 10 ? 3.2 : 2.15 - 0.75 * Math.min(1, elapsed / GAME_DURATION_SECONDS),
+          const life = elapsed < 10 ? 3.6 : elapsed < 20 ? 3 : elapsed < 40 ? 2.7 : 2.5,
             royal = elapsed >= 10 && Math.random() < 0.14,
             el = horses[idx].el,
             action = inputMode === 'gamepad' ? 'A' : '空格',
@@ -1924,7 +1940,7 @@
             rumble(0.16, 0.7, 85);
             flash(`${quick ? '神速！ ' : ''}${target.royal ? '御马！ ' : ''}+${gain}贝`, false);
             clearTarget();
-            nextTargetAt = elapsed + 0.15;
+            nextTargetAt = elapsed + 0.25;
           } else if (elapsed < 10)
             tutorialMiss(elapsed, aimed ? '按错了：请看马身字母' : '箭头还没对准发光马');
           else punish(aimed ? '缰法错乱！-500贝' : '准星脱靶！-500贝', 500);
@@ -2162,18 +2178,6 @@
           }
           prevHeld = held;
           held = scanPad();
-          if (state === 'PLAY' && inputMode === 'gamepad' && stickAimAngle !== null) {
-            const delta = angleDiff(stickAimAngle, angle);
-            const maxStep = GAMEPAD_AIM_SPEED_RADIANS * dt;
-            angle += Math.max(-maxStep, Math.min(maxStep, delta));
-            selectedIndex = horses.reduce(
-              (best, horse, index) =>
-                Math.abs(angleDiff(angle, horse.a)) < Math.abs(angleDiff(angle, horses[best].a))
-                  ? index
-                  : best,
-              0,
-            );
-          }
           if (
             state === 'PLAY' &&
             inputMode === 'gamepad' &&
