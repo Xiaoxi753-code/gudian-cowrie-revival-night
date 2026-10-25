@@ -1628,6 +1628,8 @@
           successes = 0,
           guards = 0,
           tigerHits = 0,
+          chainCount = 0,
+          chainWindowUntil = 0,
           horseShells = 0,
           guardShells = 0,
           tigerShells = 0,
@@ -1864,7 +1866,7 @@
               lfo = audio.createOscillator(),
               lfoGain = audio.createGain();
             master.gain.setValueAtTime(0.0001, now);
-            master.gain.exponentialRampToValueAtTime(0.026, now + 1.4);
+            master.gain.exponentialRampToValueAtTime(0.105, now + 1.4);
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(360, now);
             filter.Q.value = 2.4;
@@ -1890,8 +1892,8 @@
               const melody = [220, 261.63, 293.66, 329.63, 293.66, 261.63],
                 note = melody[musicStep % melody.length],
                 intensity = phase >= 2 ? 1.35 : phase === 1 ? 1.15 : 1;
-              tone(note, 0.62, 'triangle', 0.014 * intensity, 0.985);
-              if (musicStep % 4 === 0) tone(58, 0.24, 'sine', 0.028 * intensity, 0.72);
+              tone(note, 0.62, 'triangle', 0.045 * intensity, 0.985);
+              if (musicStep % 4 === 0) tone(58, 0.3, 'sine', 0.06 * intensity, 0.72);
               musicStep++;
             }, 1080);
           } catch (e) {}
@@ -2184,6 +2186,8 @@
           ui.countdown.classList.add('hidden');
           ui.result.classList.add('hidden');
           score = displayScore = combo = maxCombo = successes = guards = tigerHits = energy = 0;
+          chainCount = 0;
+          chainWindowUntil = 0;
           horseShells = guardShells = tigerShells = lostShells = 0;
           overdriveUntil = 0;
           target = null;
@@ -2314,6 +2318,9 @@
               gain = Math.round(base * mult * (difficulty === 'hard' ? 1.5 : 1));
             successes++;
             combo++;
+            if (elapsed <= chainWindowUntil) chainCount++;
+            else chainCount = 1;
+            chainWindowUntil = elapsed + 6;
             energy = Math.min(100, energy + (quick ? 24 : 17));
             maxCombo = Math.max(maxCombo, combo);
             score += gain;
@@ -2324,6 +2331,16 @@
             rewardSound();
             rumble(0.16, 0.7, 85);
             flash(`${quick ? '神速！ ' : ''}${target.royal ? '御马！ ' : ''}+${gain}贝`, false);
+            if (chainCount >= 3) {
+              const chainBonus = difficulty === 'hard' ? 900 : 600;
+              score += chainBonus;
+              horseShells += chainBonus;
+              chainCount = 0;
+              chainWindowUntil = 0;
+              tone(1046.5, 0.24, 'triangle', 0.1, 1.35);
+              setTimeout(() => tone(1568, 0.28, 'sine', 0.07, 1.08), 80);
+              flash(`贝潮连锁完成！ +${chainBonus}贝`, false);
+            }
             clearTarget();
             nextTargetAt = elapsed + (difficulty === 'hard' ? 0.12 : 0.25);
           } else if (elapsed < 10 && difficulty !== 'hard')
@@ -2381,19 +2398,21 @@
         }
         function beginScold(elapsed) {
           const action = inputMode === 'gamepad' ? 'A' : '空格';
+          const requiredHits = difficulty === 'hard' ? 14 : 10;
           clearTarget();
           scold = {
             phase: 'warn',
             start: elapsed,
             attackAt: elapsed + 1.5,
             endAt: elapsed + 3.5,
-            hold: 0,
-            maxHold: 0,
+            hits: 0,
+            requiredHits,
+            lastHitAt: elapsed - 0.3,
           };
           ui.scene.style.backgroundImage = "url('./assets/images/bg-main-front.jpg')";
           ui.scene.classList.add('show');
           ui.eventTitle.textContent = '御神主尊震怒';
-          ui.eventSub.textContent = `准备按住 ${action} · 跪地受令`;
+          ui.eventSub.textContent = `准备连续按 ${action} · 达到 ${requiredHits} 次可御守`;
           ui.eventFill.style.width = '100%';
           tone(174, 0.4, 'triangle', 0.09, 0.6);
         }
@@ -2405,19 +2424,27 @@
             if (elapsed >= scold.attackAt) {
               scold.phase = 'attack';
               ui.eventTitle.textContent = '雷 霆 训 斥';
-              ui.eventSub.textContent = `一直按住 ${action} 敲鼓御守！`;
+              ui.eventSub.textContent = `连续按 ${action} 御守：${scold.hits} / ${scold.requiredHits}`;
               ui.scene.style.animation = 'screenShake .16s infinite';
               rumble(1, 1, 2000);
               tone(78, 2, 'sawtooth', 0.11, 0.55);
             }
           } else {
-            if (held.A) {
-              scold.hold += dt;
-              scold.maxHold = Math.max(scold.maxHold, scold.hold);
-            } else scold.hold = 0;
-            ui.eventFill.style.width = Math.max(0, ((scold.endAt - elapsed) / 2) * 100) + '%';
+            if (held.A && elapsed - scold.lastHitAt >= 0.18) {
+              scold.hits++;
+              scold.lastHitAt = elapsed;
+              tone(132 + scold.hits * 7, 0.06, 'square', 0.045, 1.3);
+              rumble(0.06, 0.22, 35);
+            } else if (pressed('A')) {
+              scold.hits++;
+              scold.lastHitAt = elapsed;
+              tone(132 + scold.hits * 7, 0.06, 'square', 0.045, 1.3);
+              rumble(0.06, 0.22, 35);
+            }
+            ui.eventSub.textContent = `连续按 ${action} 御守：${Math.min(scold.hits, scold.requiredHits)} / ${scold.requiredHits}`;
+            ui.eventFill.style.width = Math.min(100, (scold.hits / scold.requiredHits) * 100) + '%';
             if (elapsed >= scold.endAt) {
-              const ok = scold.maxHold >= 1.05 && held.A;
+              const ok = scold.hits >= scold.requiredHits;
               ui.scene.style.animation = '';
               scold = null;
               hideScene();
@@ -2596,9 +2623,11 @@
               ? `<b>万贝归潮 ×3！</b> · 继续按 ${action} 敲鼓`
               : combo >= 5
                 ? '<b>螺髻疾驰 ×2！</b> · 继续追击铜马'
-                : target
-                  ? ui.prompt.innerHTML
-                  : `用 ${move} 旋盖对准金光，再按 ${action} 敲鼓`;
+                : chainCount > 0 && elapsed < chainWindowUntil
+                  ? `<b>贝潮连锁 ${chainCount}/3</b> · 6秒内再追回铜马`
+                  : target
+                    ? ui.prompt.innerHTML
+                    : `用 ${move} 旋盖对准金光，再按 ${action} 敲鼓`;
         }
         function loop(now) {
           const dt = Math.min(0.05, (now - last) / 1000);
