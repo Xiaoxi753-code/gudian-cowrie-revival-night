@@ -1070,6 +1070,10 @@
         font-size: clamp(12px, 0.95vw, 18px);
         animation: wake 1s infinite;
       }
+      #restart.locked {
+        color: #9f9579;
+        animation: none;
+      }
       #artifact {
         position: relative;
         overflow: hidden;
@@ -1385,7 +1389,7 @@
             <div class="leaderTitle">万贝守器榜 · 本机前五名</div>
             <div id="leaderboard"></div>
             <div class="optional">晨光照入展厅，一切重新凝固。只有器盖中的海贝，记得这个夜晚。</div>
-            <div id="restart">按 ENTER / START 再守一夜</div>
+            <div id="restart" class="locked">结算封存中 · 5秒后可开启下一局</div>
           </div>
           <figure id="artifact">
             <img src="./assets/images/artifact-label.jpg" alt="文物真迹考据卡：展厅实拍说明牌" />
@@ -1440,6 +1444,7 @@
           leaderboard: 'gudian_leaderboard',
         });
         const GAME_DURATION_SECONDS = 60;
+        const RESULT_RESTART_DELAY_MS = 5000;
         const MAX_PLAYER_NAME_LENGTH = 12;
         const MAX_SAVED_SCORES = 20;
         const GAMEPAD_STICK_DEADZONE = 0.36;
@@ -1481,6 +1486,7 @@
           last = performance.now(),
           startedAt = 0,
           countdownEnd = 0,
+          resultUnlockAt = 0,
           score = 0,
           displayScore = 0,
           combo = 0,
@@ -1682,6 +1688,7 @@
             const b = gamepad.buttons || [];
             h.A = !!b[0]?.pressed;
             h.B = !!b[1]?.pressed;
+            h.Y = !!b[3]?.pressed;
             h.START = !!b[9]?.pressed;
             h.LEFT = !!b[14]?.pressed;
             h.RIGHT = !!b[15]?.pressed;
@@ -2116,6 +2123,7 @@
         }
         function finish() {
           state = 'RESULT';
+          resultUnlockAt = performance.now() + RESULT_RESTART_DELAY_MS;
           clearTarget();
           scold = null;
           tiger = null;
@@ -2139,8 +2147,27 @@
           $('#guards').textContent = guards;
           $('#tigerHits').textContent = tigerHits;
           saveScore(rank);
+          $('#restart').classList.add('locked');
+          $('#restart').textContent = '结算封存中 · 5秒后可开启下一局';
           ui.result.classList.remove('hidden');
           tone(score >= 6000 ? 784 : 196, 0.5, 'triangle', 0.1, 1.5);
+        }
+        function updateResult(now) {
+          const waitMs = Math.max(0, resultUnlockAt - now),
+            restart = $('#restart');
+          if (waitMs > 0) {
+            restart.classList.add('locked');
+            restart.textContent = `结算封存中 · ${Math.ceil(waitMs / 1000)}秒后可开启下一局`;
+            return;
+          }
+          restart.classList.remove('locked');
+          restart.textContent =
+            inputMode === 'gamepad' ? '按手柄 Y 键开启下一局' : '按 ENTER 开启下一局';
+          if (
+            (inputMode === 'gamepad' && pressed('Y')) ||
+            (inputMode === 'keyboard' && pressed('START'))
+          )
+            begin();
         }
         function gameUpdate(now, dt) {
           const elapsed = (now - startedAt) / 1000,
@@ -2231,7 +2258,7 @@
             const left = countdownEnd - now;
             if (left <= 0) begin();
             else ui.countNum.textContent = Math.ceil(left / 1000);
-          } else if (state === 'RESULT' && (pressed('START') || pressed('A'))) begin();
+          } else if (state === 'RESULT') updateResult(now);
           else if (state === 'PLAY') gameUpdate(now, dt);
           updateNumbers();
           requestAnimationFrame(loop);
