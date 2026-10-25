@@ -2174,9 +2174,16 @@
               right: !!b[15]?.pressed || x > 0.65,
               ok: !!b[0]?.pressed || !!b[9]?.pressed,
             };
-          if (raw.left && !modePadPrev.left) setModeChoice(0);
-          if (raw.right && !modePadPrev.right) setModeChoice(1);
+          if (raw.left && !modePadPrev.left) {
+            rumble(0.1, 0.34, 55);
+            setModeChoice(0);
+          }
+          if (raw.right && !modePadPrev.right) {
+            rumble(0.1, 0.34, 55);
+            setModeChoice(1);
+          }
           if (raw.ok && !modePadPrev.ok) {
+            rumble(0.14, 0.42, 65);
             unlockAudio();
             selectMode(modeChoice ? 'gamepad' : 'keyboard');
           }
@@ -2189,6 +2196,7 @@
             raw = { ok: !!buttons[0]?.pressed || !!buttons[9]?.pressed };
           gamepad = pad;
           if (raw.ok && !introPadPrev.ok) {
+            rumble(0.14, 0.42, 65);
             unlockAudio();
             if (state === 'STORY') advanceStory();
             else if (state === 'NAME') {
@@ -2451,7 +2459,7 @@
         function beginScold(elapsed) {
           const action = inputMode === 'gamepad' ? 'A' : '空格';
           const requiredHits = difficulty === 'hard' ? 14 : difficulty === 'easy' ? 6 : 10,
-            attackDuration = difficulty === 'hard' ? 4.8 : difficulty === 'easy' ? 3.2 : 3.8;
+            attackDuration = 3;
           clearTarget();
           scold = {
             phase: 'warn',
@@ -2709,6 +2717,12 @@
           }
           prevHeld = held;
           held = scanPad();
+          if (
+            inputMode === 'gamepad' &&
+            ['A', 'B', 'Y', 'START', 'LEFT', 'RIGHT'].some((action) => pressed(action))
+          ) {
+            rumble(0.1, 0.34, 55);
+          }
           if (state === 'DIFFICULTY' && (pressed('LEFT') || pressed('RIGHT')))
             setDifficultyChoice((difficultyChoice + (pressed('RIGHT') ? 1 : 2)) % 3);
           if (
