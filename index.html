@@ -204,7 +204,7 @@
         top: 15.2%;
         left: 50%;
         transform: translateX(-50%);
-        font-size: clamp(10px, 0.8vw, 16px);
+        font-size: clamp(13px, 0.95vw, 20px);
         letter-spacing: 0.3em;
         color: #d9cca6;
         text-shadow: 0 2px 2px #000;
@@ -225,7 +225,7 @@
       }
       .sideTitle {
         color: var(--gold);
-        font-size: clamp(11px, 0.9vw, 17px);
+        font-size: clamp(14px, 1vw, 20px);
         letter-spacing: 0.18em;
         padding-bottom: 6%;
         border-bottom: 1px solid var(--line);
@@ -244,7 +244,7 @@
         border-left: 2px solid #323529;
         color: #6f715f;
         background: rgba(255, 255, 255, 0.018);
-        font-size: clamp(10px, 0.78vw, 15px);
+        font-size: clamp(12px, 0.9vw, 18px);
         line-height: 1.35;
         transition: 0.3s;
       }
@@ -411,7 +411,7 @@
         color: #aca487;
         border: 2px solid rgba(170, 148, 85, 0.42);
         background: radial-gradient(circle, #172219, #080d0a 68%);
-        font-size: clamp(10px, 0.76vw, 15px);
+        font-size: clamp(12px, 0.92vw, 19px);
         font-weight: 800;
         letter-spacing: 0.06em;
         transition: 0.16s;
@@ -483,7 +483,7 @@
         transform: translateX(-50%);
         min-width: 48%;
         text-align: center;
-        font-size: clamp(13px, 1.05vw, 20px);
+        font-size: clamp(15px, 1.2vw, 24px);
         letter-spacing: 0.12em;
         color: #f4e4bd;
         background: rgba(2, 5, 4, 0.88);
@@ -496,7 +496,7 @@
         font-size: 1.18em;
       }
       .horse .need {
-        font-size: clamp(9px, 0.9vw, 17px);
+        font-size: clamp(14px, 1.15vw, 23px);
         font-family: 'Microsoft YaHei', sans-serif;
         letter-spacing: 0.04em;
       }
@@ -1098,7 +1098,7 @@
         left: 4%;
         max-width: 44%;
         padding: 1.5% 2%;
-        font-size: clamp(10px, 0.74vw, 14px);
+        font-size: clamp(12px, 0.9vw, 18px);
         color: #fff1c1;
         background: rgba(4, 8, 6, 0.9);
         border-left: 3px solid var(--gold);
@@ -2018,6 +2018,7 @@
               ui.eventTitle.textContent = '雷 霆 训 斥';
               ui.eventSub.textContent = `一直按住 ${action} 敲鼓御守！`;
               ui.scene.style.animation = 'screenShake .16s infinite';
+              rumble(1, 1, 2000);
               tone(78, 2, 'sawtooth', 0.11, 0.55);
             }
           } else {
