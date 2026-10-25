@@ -16,12 +16,13 @@
 游戏使用显式状态机组织页面流程：
 
 ```text
-STORY → NAME → MODE → READY → COUNTDOWN → PLAY → RESULT
+STORY → NAME → MODE → DIFFICULTY → READY → COUNTDOWN → PLAY → RESULT
 ```
 
 - `STORY`：四幕剧情及积分说明。
 - `NAME`：登记守器人姓名。
 - `MODE`：选择键盘或手柄。
+- `DIFFICULTY`：选择已解锁的第一关或第二关。
 - `READY`：展示当前模式的两键说明。
 - `COUNTDOWN`：三秒倒数。
 - `PLAY`：严格 60 秒游戏循环。
@@ -49,6 +50,7 @@ STORY → NAME → MODE → READY → COUNTDOWN → PLAY → RESULT
 - 动画帧只负责轮询与渲染，不允许用帧数推算游戏时间。
 - 分数最低为 0。
 - 排行榜键名为 `gudian_leaderboard`，最多保存 20 条，结算展示前 5 条。
+- 排行榜以标准化玩家姓名去重，每位玩家仅保留历史最高分及其关卡信息。
 - 玩家姓名键名为 `gudian_last_player`，最长 12 个字符。
 
 ## 5. 素材规范

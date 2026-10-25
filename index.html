@@ -78,6 +78,14 @@
           repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.018) 4px);
         mix-blend-mode: screen;
       }
+      #game.hardMode::before {
+        filter: saturate(1.05) contrast(1.25) hue-rotate(-12deg);
+      }
+      #game.hardMode #discWrap {
+        box-shadow:
+          0 0 0 2px rgba(255, 68, 46, 0.48),
+          0 0 42px rgba(255, 48, 28, 0.24);
+      }
       .hidden {
         display: none !important;
       }
@@ -868,6 +876,27 @@
         color: #fff1c1;
         box-shadow: 0 0 22px rgba(255, 201, 77, 0.15);
       }
+      .modeCard.locked {
+        filter: grayscale(0.72) brightness(0.58);
+      }
+      .modeCard.locked .modeKeys {
+        color: #c5786e;
+      }
+      #difficulty {
+        background:
+          linear-gradient(rgba(2, 5, 3, 0.64), rgba(2, 5, 3, 0.95)),
+          url('./assets/images/scene-horses-tiger.jpg') center/cover;
+      }
+      #difficulty .gateInner {
+        width: 80%;
+        padding: 3% 5%;
+      }
+      #difficultyStatus {
+        min-height: 1.6em;
+        margin-top: 1.4%;
+        color: #ff9a8f;
+        font-size: clamp(11px, 0.85vw, 16px);
+      }
       .modeIcon {
         font-size: clamp(28px, 3.5vw, 66px);
         line-height: 1;
@@ -1117,6 +1146,15 @@
       }
       .settlementGrid .loss b {
         color: #ff8178;
+      }
+      #unlockNotice {
+        margin-top: 1.6%;
+        padding: 1.5% 2%;
+        border: 1px solid rgba(85, 214, 161, 0.4);
+        background: rgba(85, 214, 161, 0.08);
+        color: #83f4bd;
+        font-size: clamp(10px, 0.78vw, 15px);
+        font-weight: 900;
       }
       #restart {
         color: white;
@@ -1400,6 +1438,29 @@
           <div class="wake">按 ← → 选择模式 · ENTER 确认</div>
         </div>
       </section>
+      <section id="difficulty" class="curtain hidden">
+        <div class="gateInner">
+          <div class="eyebrow">守器关卡 · 每局严格 60 秒</div>
+          <div class="bigTitle">选择今夜的器灵强度</div>
+          <div class="storyLead">第二关由当前守器人最高分解锁，同一姓名只保留一条最佳成绩。</div>
+          <div class="modeCards">
+            <div class="modeCard on" id="difficultyNormal">
+              <div class="modeIcon">壹</div>
+              <div class="modeName">第一关 · 守器初醒</div>
+              <div class="modeKeys">宽松锁马 · 四次训斥 · 标准奖惩</div>
+              <div class="modeStatus">适合熟悉器盖与七马槽位</div>
+            </div>
+            <div class="modeCard locked" id="difficultyHard">
+              <div class="modeIcon">贰</div>
+              <div class="modeName">第二关 · 万贝狂潮</div>
+              <div class="modeKeys">高速御马 · 五次训斥 · 双虎加倍</div>
+              <div class="modeStatus" id="hardStatus">个人最高分达到 30,000 贝后解锁</div>
+            </div>
+          </div>
+          <div id="difficultyStatus"></div>
+          <div class="wake">按 ← → / 摇杆选择 · ENTER / A 确认 · B / ESC 返回</div>
+        </div>
+      </section>
       <section id="ready" class="curtain hidden">
         <div class="gateInner">
           <div class="eyebrow" id="readyMode">电脑键盘模式 · 一局严格 60 秒</div>
@@ -1418,7 +1479,9 @@
               >
             </div>
           </div>
-          <div class="optional">天亮前追回越多海贝越好。连续成功会<b>自动进入万贝爆发</b>。</div>
+          <div class="optional" id="readyDifficultyTip">
+            天亮前追回越多海贝越好。连续成功会<b>自动进入万贝爆发</b>。
+          </div>
           <div class="wake" id="readyWake">按 ENTER 开始 · 接下来跟着屏幕做</div>
         </div>
       </section>
@@ -1431,7 +1494,7 @@
       <section id="result" class="curtain hidden">
         <div id="resultGrid">
           <div id="resultScore">
-            <div class="eyebrow">晨光封器 · 万贝归仓</div>
+            <div class="eyebrow" id="resultDifficulty">晨光封器 · 第一关结算</div>
             <div id="rank">SSS·古滇御神</div>
             <div id="finalScore">0</div>
             <div id="stats">
@@ -1449,6 +1512,7 @@
                 <span class="loss">器身漏贝 <b id="lostShells">-0 贝</b></span>
               </div>
             </div>
+            <div id="unlockNotice" class="hidden">第二关「万贝狂潮」已经解锁！</div>
             <div class="leaderTitle">万贝守器榜 · 本机前五名</div>
             <div id="leaderboard"></div>
             <div class="optional">晨光照入展厅，一切重新凝固。只有器盖中的海贝，记得这个夜晚。</div>
@@ -1479,6 +1543,7 @@
           register: $('#register'),
           nameInput: $('#playerNameInput'),
           gate: $('#gate'),
+          difficulty: $('#difficulty'),
           ready: $('#ready'),
           countdown: $('#countdown'),
           countNum: $('#countNum'),
@@ -1509,6 +1574,7 @@
         });
         const GAME_DURATION_SECONDS = 60;
         const RESULT_RESTART_DELAY_MS = 5000;
+        const HARD_MODE_UNLOCK_SCORE = 30000;
         const MAX_PLAYER_NAME_LENGTH = 12;
         const MAX_SAVED_SCORES = 20;
         const GAMEPAD_STICK_DEADZONE = 0.36;
@@ -1542,6 +1608,10 @@
           currentRunId = '',
           inputMode = 'keyboard',
           modeChoice = 0,
+          difficulty = 'normal',
+          difficultyChoice = 0,
+          hardUnlocked = false,
+          unlockedHardThisRun = false,
           gamepad = null,
           introPadPrev = {},
           modePadPrev = {},
@@ -1644,6 +1714,7 @@
             localStorage.setItem(STORAGE_KEYS.lastPlayer, playerName);
           } catch (e) {}
           $('#playerBadge').textContent = `守器人 · ${playerName}`;
+          hardUnlocked = getPlayerBestScore(playerName) >= HARD_MODE_UNLOCK_SCORE;
           ui.register.classList.add('hidden');
           showMode();
           tone(523, 0.12, 'triangle', 0.06, 1.4);
@@ -1651,29 +1722,59 @@
         function loadLeaders() {
           try {
             const data = JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]');
-            return Array.isArray(data) ? data : [];
+            if (!Array.isArray(data)) return [];
+            const bestByPlayer = new Map();
+            data.forEach((record) => {
+              const name = String(record?.name || '无名守器人').trim() || '无名守器人',
+                key = normalizePlayerName(name),
+                normalized = {
+                  ...record,
+                  id: `player:${key}`,
+                  name,
+                  score: Math.max(0, Number(record?.score) || 0),
+                },
+                previous = bestByPlayer.get(key);
+              if (!previous || normalized.score > previous.score) bestByPlayer.set(key, normalized);
+            });
+            return [...bestByPlayer.values()].sort((a, b) => b.score - a.score);
           } catch (e) {
             return [];
           }
         }
+        function normalizePlayerName(name) {
+          return String(name || '')
+            .trim()
+            .normalize('NFKC')
+            .toLocaleLowerCase('zh-CN');
+        }
+        function getPlayerBestScore(name = playerName) {
+          const key = normalizePlayerName(name);
+          return (
+            loadLeaders().find((record) => normalizePlayerName(record.name) === key)?.score || 0
+          );
+        }
         function saveScore(rank) {
           const list = loadLeaders();
-          currentRunId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
-          list.push({
-            id: currentRunId,
-            name: playerName || '无名守器人',
-            score,
-            rank,
-            time: new Date().toLocaleDateString('zh-CN'),
-          });
+          const key = normalizePlayerName(playerName || '无名守器人'),
+            existingIndex = list.findIndex((record) => normalizePlayerName(record.name) === key),
+            record = {
+              id: `player:${key}`,
+              name: playerName || '无名守器人',
+              score,
+              rank,
+              difficulty,
+              time: new Date().toLocaleDateString('zh-CN'),
+            };
+          currentRunId = record.id;
+          if (existingIndex < 0) list.push(record);
+          else if (score > list[existingIndex].score) list[existingIndex] = record;
+          else currentRunId = list[existingIndex].id;
           list.sort((a, b) => b.score - a.score);
+          const uniqueLeaders = list.slice(0, MAX_SAVED_SCORES);
           try {
-            localStorage.setItem(
-              STORAGE_KEYS.leaderboard,
-              JSON.stringify(list.slice(0, MAX_SAVED_SCORES)),
-            );
+            localStorage.setItem(STORAGE_KEYS.leaderboard, JSON.stringify(uniqueLeaders));
           } catch (e) {}
-          renderLeaderboard(list.slice(0, 5));
+          renderLeaderboard(uniqueLeaders.slice(0, 5));
         }
         function renderLeaderboard(list = loadLeaders().slice(0, 5)) {
           const box = $('#leaderboard');
@@ -1690,7 +1791,10 @@
               points = document.createElement('b');
             pos.textContent = `#${i + 1}`;
             name.textContent = r.name;
-            points.textContent = Number(r.score || 0).toLocaleString('zh-CN') + ' 贝';
+            points.textContent =
+              (r.difficulty === 'hard' ? '贰·' : '') +
+              Number(r.score || 0).toLocaleString('zh-CN') +
+              ' 贝';
             row.append(pos, name, points);
             box.appendChild(row);
           });
@@ -1853,16 +1957,16 @@
           setConnected();
           const h = {};
           if (inputMode === 'gamepad' && gamepad) {
-            const b = gamepad.buttons || [];
+            const b = gamepad.buttons || [],
+              x = gamepad.axes?.[0] || 0,
+              y = gamepad.axes?.[1] || 0;
             h.A = !!b[0]?.pressed;
             h.B = !!b[1]?.pressed;
             h.Y = !!b[3]?.pressed;
             h.START = !!b[9]?.pressed;
-            h.LEFT = !!b[14]?.pressed;
-            h.RIGHT = !!b[15]?.pressed;
-            const x = gamepad.axes?.[0] || 0,
-              y = gamepad.axes?.[1] || 0,
-              magnitude = Math.hypot(x, y);
+            h.LEFT = !!b[14]?.pressed || (state === 'DIFFICULTY' && x < -0.65);
+            h.RIGHT = !!b[15]?.pressed || (state === 'DIFFICULTY' && x > 0.65);
+            const magnitude = Math.hypot(x, y);
             if (magnitude > GAMEPAD_STICK_DEADZONE && !h.LEFT && !h.RIGHT) {
               const stickAngle = Math.atan2(y, x);
               const snappedIndex = nearestHorseIndex(stickAngle);
@@ -1923,7 +2027,6 @@
             return;
           }
           inputMode = mode;
-          state = 'READY';
           keys = {};
           const buttons = gamepad?.buttons || [];
           held =
@@ -1936,7 +2039,6 @@
               : {};
           prevHeld = { ...held };
           ui.gate.classList.add('hidden');
-          ui.ready.classList.remove('hidden');
           const pad = mode === 'gamepad';
           $('#readyMode').textContent = pad
             ? '游戏手柄模式 · 一局严格 60 秒'
@@ -1961,14 +2063,64 @@
           $('#controlTip').innerHTML = pad
             ? '<b>左摇杆/十字键</b>选择铜马，箭头自动吸附<br><b>A 键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓'
             : '<b>左右键</b>旋转古滇器盖<br><b>空格键</b>敲响中央铜鼓<br>抓马、防御、退虎都是敲鼓';
+          showDifficulty();
+        }
+        function setDifficultyChoice(choice) {
+          difficultyChoice = choice;
+          $('#difficultyNormal').classList.toggle('on', choice === 0);
+          $('#difficultyHard').classList.toggle('on', choice === 1);
+          $('#difficultyStatus').textContent =
+            choice === 1 && !hardUnlocked
+              ? `尚未解锁 · ${playerName} 的最高分需达到 ${HARD_MODE_UNLOCK_SCORE.toLocaleString('zh-CN')} 贝`
+              : choice === 1
+                ? '狂潮已解锁 · 高风险、高倍率、五次雷霆训斥'
+                : '标准节奏 · 适合冲击 30,000 贝解锁第二关';
+          tone(choice ? 466.16 : 349.23, 0.06, 'triangle', 0.03, 1.08);
+        }
+        function showDifficulty() {
+          state = 'DIFFICULTY';
+          const playerBest = getPlayerBestScore(playerName);
+          hardUnlocked = playerBest >= HARD_MODE_UNLOCK_SCORE;
+          $('#difficultyHard').classList.toggle('locked', !hardUnlocked);
+          $('#hardStatus').textContent = hardUnlocked
+            ? '已解锁 · 奖励 ×1.5，狂暴御马出现率提升'
+            : `当前最高 ${playerBest.toLocaleString('zh-CN')} / ${HARD_MODE_UNLOCK_SCORE.toLocaleString('zh-CN')} 贝`;
+          ui.gate.classList.add('hidden');
+          ui.ready.classList.add('hidden');
+          ui.result.classList.add('hidden');
+          ui.difficulty.classList.remove('hidden');
+          ui.phase.textContent = '闭馆之后 · 请选择守器关卡';
+          setDifficultyChoice(hardUnlocked && difficulty === 'hard' ? 1 : 0);
+        }
+        function selectDifficulty() {
+          if (difficultyChoice === 1 && !hardUnlocked) {
+            $('#difficultyStatus').textContent = '第二关尚未解锁：先在第一关达到 30,000 贝';
+            tone(92, 0.24, 'sawtooth', 0.06, 0.65);
+            return;
+          }
+          difficulty = difficultyChoice === 1 ? 'hard' : 'normal';
+          state = 'READY';
+          ui.difficulty.classList.add('hidden');
+          ui.ready.classList.remove('hidden');
+          const hard = difficulty === 'hard';
+          $('#readyMode').textContent = `${inputMode === 'gamepad' ? '游戏手柄' : '电脑键盘'} · ${
+            hard ? '第二关「万贝狂潮」' : '第一关「守器初醒」'
+          } · 60 秒`;
+          $('#readyTitle').textContent = hard ? '狂暴御马苏醒，守住万贝！' : '旋转器盖，敲鼓收贝';
+          $('#readyDifficultyTip').innerHTML = hard
+            ? '第二关：奖励 <b>×1.5</b>，但御马更快、训斥更多、漏贝惩罚更重。'
+            : '第一关：天亮前追回越多海贝越好，达到 <b>30,000 贝</b>解锁第二关。';
+          tone(hard ? 659.25 : 523.25, 0.16, 'triangle', 0.065, 1.3);
         }
         function showMode() {
           state = 'MODE';
           keys = {};
           held = {};
           prevHeld = {};
+          modePadPrev = {};
           ui.story.classList.add('hidden');
           ui.register.classList.add('hidden');
+          ui.difficulty.classList.add('hidden');
           ui.ready.classList.add('hidden');
           ui.result.classList.add('hidden');
           ui.gate.classList.remove('hidden');
@@ -2026,6 +2178,7 @@
           ensureAudio();
           state = 'PLAY';
           startMusic();
+          ui.game.classList.toggle('hardMode', difficulty === 'hard');
           ui.gate.classList.add('hidden');
           ui.ready.classList.add('hidden');
           ui.countdown.classList.add('hidden');
@@ -2042,7 +2195,7 @@
           selectedIndex = 0;
           angle = horses[0].a;
           startedAt = performance.now();
-          nextTargetAt = 0.55;
+          nextTargetAt = difficulty === 'hard' ? 0.35 : 0.55;
           horses.forEach((h) => {
             h.el.classList.remove('active', 'royal');
             h.el.querySelector('.need').textContent = '';
@@ -2095,8 +2248,23 @@
         }
         function spawnTarget(elapsed) {
           let idx = Math.floor(Math.random() * 7);
-          const life = elapsed < 10 ? 3.6 : elapsed < 20 ? 3 : elapsed < 40 ? 2.7 : 2.5,
-            royal = elapsed >= 10 && Math.random() < 0.14,
+          const hard = difficulty === 'hard',
+            life = hard
+              ? elapsed < 10
+                ? 2.55
+                : elapsed < 20
+                  ? 2.25
+                  : elapsed < 40
+                    ? 2
+                    : 1.75
+              : elapsed < 10
+                ? 3.6
+                : elapsed < 20
+                  ? 3
+                  : elapsed < 40
+                    ? 2.7
+                    : 2.5,
+            royal = elapsed >= (hard ? 4 : 10) && Math.random() < (hard ? 0.25 : 0.14),
             el = horses[idx].el,
             action = inputMode === 'gamepad' ? 'A' : '空格',
             move = inputMode === 'gamepad' ? '左摇杆 / 十字键' : '← →';
@@ -2108,7 +2276,7 @@
           el.querySelector('.need').textContent = action;
           tone(92 + idx * 9, royal ? 0.16 : 0.1, 'triangle', royal ? 0.035 : 0.018, 1.45);
           ui.prompt.innerHTML =
-            elapsed < 10
+            elapsed < 10 && !hard
               ? `守器教学：用 <b>${move}</b> 旋盖对准 ${idx + 1} 号铜马，再按 <b>${action}</b> 敲鼓`
               : `追上 <b>${royal ? '载贝御马' : '逃贝铜马'} ${idx + 1}</b> · 按 <b>${action}</b> 敲鼓`;
         }
@@ -2128,7 +2296,7 @@
         }
         function handleHorse(k, elapsed) {
           if (!target) {
-            if (elapsed < 10) {
+            if (elapsed < 10 && difficulty !== 'hard') {
               tutorialMiss(elapsed, '先等马位亮起，再按键');
               return;
             }
@@ -2143,7 +2311,7 @@
               base = 300 + (quick ? 200 : 0),
               mult =
                 (combo >= 4 ? 2 : 1) * (elapsed < overdriveUntil ? 3 : 1) * (target.royal ? 2 : 1),
-              gain = base * mult;
+              gain = Math.round(base * mult * (difficulty === 'hard' ? 1.5 : 1));
             successes++;
             combo++;
             energy = Math.min(100, energy + (quick ? 24 : 17));
@@ -2157,12 +2325,14 @@
             rumble(0.16, 0.7, 85);
             flash(`${quick ? '神速！ ' : ''}${target.royal ? '御马！ ' : ''}+${gain}贝`, false);
             clearTarget();
-            nextTargetAt = elapsed + 0.25;
-          } else if (elapsed < 10)
+            nextTargetAt = elapsed + (difficulty === 'hard' ? 0.12 : 0.25);
+          } else if (elapsed < 10 && difficulty !== 'hard')
             tutorialMiss(elapsed, aimed ? '按错了：请看马身字母' : '箭头还没对准发光马');
           else punish(aimed ? '缰法错乱！-500贝' : '准星脱靶！-500贝', 500);
         }
         function punish(msg, amount) {
+          if (difficulty === 'hard') amount = Math.round((amount * 1.4) / 100) * 100;
+          msg = msg.replace(/-\d+贝/, `-${amount}贝`);
           const scoreBeforePenalty = score;
           score = Math.max(0, score - amount);
           lostShells += scoreBeforePenalty - score;
@@ -2253,8 +2423,9 @@
               hideScene();
               scoldIndex++;
               if (ok) {
-                score += 800;
-                guardShells += 800;
+                const guardGain = difficulty === 'hard' ? 1200 : 800;
+                score += guardGain;
+                guardShells += guardGain;
                 energy = Math.min(100, energy + 30);
                 guards++;
                 combo++;
@@ -2263,7 +2434,7 @@
                 lore('kneel');
                 rewardSound();
                 rumble(0.2, 0.8, 140);
-                flash('铜鼓御守成功 +800贝', false);
+                flash(`铜鼓御守成功 +${guardGain}贝`, false);
               } else punish('主尊震怒！-500贝', 500);
               nextTargetAt = elapsed + 0.38;
             }
@@ -2272,21 +2443,24 @@
         function beginTiger(elapsed) {
           const action = inputMode === 'gamepad' ? 'A' : '空格';
           clearTarget();
-          tiger = { start: elapsed, end: elapsed + 3 };
+          const duration = difficulty === 'hard' ? 4 : 3,
+            hitReward = difficulty === 'hard' ? 150 : 100;
+          tiger = { start: elapsed, end: elapsed + duration, duration, hitReward };
           tigerDone = true;
           ui.scene.style.backgroundImage = "url('./assets/images/scene-horses-tiger.jpg')";
           ui.scene.classList.add('show');
           ui.eventTitle.textContent = '双虎攀器夺贝';
-          ui.eventSub.textContent = `3秒狂按 ${action} 敲鼓震虎 · 每击 +100`;
+          ui.eventSub.textContent = `${duration}秒狂按 ${action} 敲鼓震虎 · 每击 +${hitReward}`;
           ui.eventFill.style.width = '100%';
           rumble(0.65, 0.8, 300);
           tone(112, 0.4, 'sawtooth', 0.1, 1.7);
         }
         function updateTiger(elapsed) {
           if (!tiger) return;
-          ui.eventFill.style.width = Math.max(0, ((tiger.end - elapsed) / 3) * 100) + '%';
+          ui.eventFill.style.width =
+            Math.max(0, ((tiger.end - elapsed) / tiger.duration) * 100) + '%';
           if (pressed('A')) {
-            const gain = elapsed < overdriveUntil ? 300 : 100;
+            const gain = tiger.hitReward * (elapsed < overdriveUntil ? 3 : 1);
             score += gain;
             tigerShells += gain;
             tigerHits++;
@@ -2327,6 +2501,12 @@
                 : score >= 3000
                   ? 'B·螺髻驯马师'
                   : 'D·初醒守器学徒';
+          unlockedHardThisRun = !hardUnlocked && score >= HARD_MODE_UNLOCK_SCORE;
+          if (score >= HARD_MODE_UNLOCK_SCORE) hardUnlocked = true;
+          $('#resultDifficulty').textContent =
+            difficulty === 'hard'
+              ? '晨光封器 · 第二关「万贝狂潮」结算'
+              : '晨光封器 · 第一关「守器初醒」结算';
           $('#rank').textContent = rank;
           $('#finalScore').textContent = score.toLocaleString('zh-CN');
           $('#maxCombo').textContent = maxCombo;
@@ -2337,6 +2517,8 @@
           $('#guardShells').textContent = `+${guardShells.toLocaleString('zh-CN')} 贝`;
           $('#tigerShells').textContent = `+${tigerShells.toLocaleString('zh-CN')} 贝`;
           $('#lostShells').textContent = `-${lostShells.toLocaleString('zh-CN')} 贝`;
+          $('#unlockNotice').classList.toggle('hidden', !unlockedHardThisRun);
+          $('#unlockNotice').textContent = '突破 30,000 贝！第二关「万贝狂潮」已经解锁';
           saveScore(rank);
           $('#restart').classList.add('locked');
           $('#restart').textContent = '结算封存中 · 5秒后可开启下一局';
@@ -2359,7 +2541,7 @@
             (inputMode === 'gamepad' && pressed('Y')) ||
             (inputMode === 'keyboard' && pressed('START'))
           )
-            begin();
+            showDifficulty();
         }
         function gameUpdate(now, dt) {
           const elapsed = (now - startedAt) / 1000,
@@ -2369,7 +2551,9 @@
           ui.timer.textContent = remaining.toFixed(1);
           ui.timer.classList.toggle('danger', remaining <= 10);
           setPhase(elapsed < 20 ? 0 : elapsed < 40 ? 1 : 2);
-          if (elapsed < 10) ui.phase.textContent = '守器初醒 · 跟随金光旋盖敲鼓';
+          if (elapsed < 10)
+            ui.phase.textContent =
+              difficulty === 'hard' ? '万贝狂潮 · 狂暴御马连续来袭' : '守器初醒 · 跟随金光旋盖敲鼓';
           if (elapsed >= GAME_DURATION_SECONDS) {
             finish();
             return;
@@ -2390,7 +2574,8 @@
             updateTiger(elapsed);
             return;
           }
-          if (scoldIndex < 4 && elapsed >= [12, 24, 36, 48][scoldIndex]) {
+          const scoldTimes = difficulty === 'hard' ? [10, 20, 30, 40, 50] : [12, 24, 36, 48];
+          if (scoldIndex < scoldTimes.length && elapsed >= scoldTimes[scoldIndex]) {
             beginScold(elapsed);
             return;
           }
@@ -2399,7 +2584,7 @@
             return;
           }
           if (target && elapsed >= target.deadline) {
-            if (elapsed < 10) tutorialMiss(elapsed);
+            if (elapsed < 10 && difficulty !== 'hard') tutorialMiss(elapsed);
             else punish('铜马携贝逃脱！-500贝', 500);
             return;
           }
@@ -2431,6 +2616,8 @@
           }
           prevHeld = held;
           held = scanPad();
+          if (state === 'DIFFICULTY' && (pressed('LEFT') || pressed('RIGHT')))
+            setDifficultyChoice(pressed('RIGHT') ? 1 : 0);
           if (
             state === 'PLAY' &&
             inputMode === 'gamepad' &&
@@ -2440,7 +2627,9 @@
             angle = horses[selectedIndex].a;
           }
           updatePadUI();
-          if (state === 'READY' && inputMode === 'gamepad' && pressed('B')) showMode();
+          if (state === 'DIFFICULTY' && pressed('B')) showMode();
+          else if (state === 'DIFFICULTY' && (pressed('A') || pressed('START'))) selectDifficulty();
+          else if (state === 'READY' && inputMode === 'gamepad' && pressed('B')) showDifficulty();
           else if (
             state === 'READY' &&
             (pressed('START') || (inputMode === 'gamepad' && pressed('A')))
@@ -2480,8 +2669,21 @@
             ensureAudio();
             return;
           }
+          if (state === 'DIFFICULTY') {
+            if (!e.repeat && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
+              e.preventDefault();
+              setDifficultyChoice(e.code === 'ArrowRight' ? 1 : 0);
+            } else if (e.code === 'Enter' && !e.repeat) {
+              e.preventDefault();
+              selectDifficulty();
+            } else if (e.code === 'Escape' && !e.repeat) {
+              e.preventDefault();
+              showMode();
+            }
+            return;
+          }
           if (state === 'READY' && inputMode === 'keyboard' && e.code === 'Escape') {
-            showMode();
+            showDifficulty();
             return;
           }
           keys[e.code] = true;
