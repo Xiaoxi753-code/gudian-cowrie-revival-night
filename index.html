@@ -1296,7 +1296,7 @@
           <div class="storyTitle" id="storyTitle">器盖上的人马，睁开了眼睛</div>
           <div class="storyBody" id="storyBody"></div>
           <div class="storyDots" id="storyDots"><i class="on"></i><i></i><i></i><i></i></div>
-          <div class="wake" id="storyNext">按 ENTER 继续</div>
+          <div class="wake" id="storyNext">按 ENTER / 手柄 A 或 START 继续</div>
         </div>
       </section>
       <section id="register" class="curtain hidden">
@@ -1315,7 +1315,7 @@
             placeholder="例如：滇池守夜人"
           />
           <div id="nameError"></div>
-          <div class="wake">输入姓名后按 ENTER 登记</div>
+          <div class="wake">输入姓名后按 ENTER，或按手柄 A / START 登记</div>
         </div>
       </section>
       <section id="gate" class="curtain hidden">
@@ -1474,6 +1474,7 @@
           inputMode = 'keyboard',
           modeChoice = 0,
           gamepad = null,
+          introPadPrev = {},
           modePadPrev = {},
           angle = -Math.PI / 2,
           selectedIndex = 0,
@@ -1524,7 +1525,9 @@
           $('#storyBody').innerHTML = p.body;
           $$('#storyDots i').forEach((d, i) => d.classList.toggle('on', i === storyStep));
           $('#storyNext').textContent =
-            storyStep === storyPages.length - 1 ? '按 ENTER 登记守器人' : '按 ENTER 继续';
+            storyStep === storyPages.length - 1
+              ? '按 ENTER / 手柄 A 或 START 登记守器人'
+              : '按 ENTER / 手柄 A 或 START 继续';
         }
         function advanceStory() {
           if (storyStep < storyPages.length - 1) {
@@ -1747,8 +1750,16 @@
           inputMode = mode;
           state = 'READY';
           keys = {};
-          held = {};
-          prevHeld = {};
+          const buttons = gamepad?.buttons || [];
+          held =
+            mode === 'gamepad'
+              ? {
+                  A: !!buttons[0]?.pressed,
+                  B: !!buttons[1]?.pressed,
+                  START: !!buttons[9]?.pressed,
+                }
+              : {};
+          prevHeld = { ...held };
           ui.gate.classList.add('hidden');
           ui.ready.classList.remove('hidden');
           const pad = mode === 'gamepad';
@@ -1763,7 +1774,7 @@
             ? '<span class="keys">A = 敲鼓</span><br>抓马、防御、退虎都使用它。'
             : '<span class="keys">空格 = 敲鼓</span><br>抓马、防御、退虎都使用它。';
           $('#readyWake').textContent = pad
-            ? '按 START 开始 · B 返回模式选择'
+            ? '按 A / START 开始 · B 返回模式选择'
             : '按 ENTER 开始 · ESC 返回模式选择';
           $('#countHint').textContent = pad
             ? '旋转器盖对准铜马 → 按 A 敲鼓'
@@ -1806,6 +1817,23 @@
           if (raw.right && !modePadPrev.right) setModeChoice(1);
           if (raw.ok && !modePadPrev.ok) selectMode(modeChoice ? 'gamepad' : 'keyboard');
           modePadPrev = raw;
+        }
+        function updateIntroPad() {
+          const pads = navigator.getGamepads ? navigator.getGamepads() : [],
+            pad = [...pads].find(Boolean) || null,
+            buttons = pad?.buttons || [],
+            raw = { ok: !!buttons[0]?.pressed || !!buttons[9]?.pressed };
+          gamepad = pad;
+          if (raw.ok && !introPadPrev.ok) {
+            ensureAudio();
+            if (state === 'STORY') advanceStory();
+            else if (state === 'NAME') {
+              if (!ui.nameInput.value.trim()) ui.nameInput.value = '手柄守器人';
+              modePadPrev = raw;
+              registerPlayer();
+            }
+          }
+          introPadPrev = raw;
         }
         function startCountdown(now) {
           ensureAudio();
@@ -2177,6 +2205,11 @@
             requestAnimationFrame(loop);
             return;
           }
+          if (state === 'STORY' || state === 'NAME') {
+            updateIntroPad();
+            requestAnimationFrame(loop);
+            return;
+          }
           prevHeld = held;
           held = scanPad();
           if (
@@ -2189,7 +2222,11 @@
           }
           updatePadUI();
           if (state === 'READY' && inputMode === 'gamepad' && pressed('B')) showMode();
-          else if (state === 'READY' && pressed('START')) startCountdown(now);
+          else if (
+            state === 'READY' &&
+            (pressed('START') || (inputMode === 'gamepad' && pressed('A')))
+          )
+            startCountdown(now);
           else if (state === 'COUNTDOWN') {
             const left = countdownEnd - now;
             if (left <= 0) begin();
