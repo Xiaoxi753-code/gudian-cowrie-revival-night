@@ -59,7 +59,15 @@
         cursor: pointer;
       }
       body.pointer #arena {
-        cursor: crosshair;
+        cursor: default;
+      }
+      body.pointer .horse:hover .ring {
+        border-color: rgba(255, 224, 120, 0.85);
+        border-style: solid;
+        box-shadow: 0 0 14px rgba(255, 201, 77, 0.35);
+      }
+      body.pointer .horse:hover .steed {
+        filter: drop-shadow(0 0 8px rgba(255, 224, 120, 0.55));
       }
       button,
       input {
@@ -656,21 +664,13 @@
         font-family: 'Microsoft YaHei', sans-serif;
         letter-spacing: 0.04em;
       }
-      body.pointer #simpleSpace {
-        width: 92%;
-        height: auto;
-        min-height: 2.8em;
-        margin: 6% auto 4%;
-        padding: 0.55em 0.4em;
-        border: 1px solid rgba(255, 201, 77, 0.45);
-        border-bottom-width: 1px;
-        border-radius: 8px;
-        background: rgba(255, 201, 77, 0.1);
-        color: #ffe9a8;
-        font: 800 clamp(10px, 0.82vw, 15px) 'Microsoft YaHei';
-        letter-spacing: 0.04em;
-        text-align: center;
-        box-shadow: none;
+      body.pointer .side:last-of-type {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      body.pointer .side:last-of-type .sideTitle {
+        margin-bottom: 10%;
       }
       #statusLine {
         position: absolute;
@@ -3728,13 +3728,8 @@
           $('#countHint').textContent = info.countHint;
           $('#controlTitle').textContent = pad ? '游戏手柄 · 旋盖敲鼓' : `${info.name} · 旋盖敲鼓`;
           $('.simpleKeys').classList.toggle('hidden', pointer);
-          $('#simpleSpace').textContent = pointer
-            ? scheme === 'drag'
-              ? '拖动器盖 · 点击铜鼓'
-              : '点击铜马 · 敲鼓'
-            : pad
-              ? 'A · 敲鼓'
-              : '空　格 · 敲鼓';
+          $('#simpleSpace').classList.toggle('hidden', pointer);
+          $('#simpleSpace').textContent = pad ? 'A · 敲鼓' : '空　格 · 敲鼓';
           $('#controlTip').innerHTML = info.controlTip;
           $('#readyActions').classList.toggle('hidden', !pointer);
           setConnected();
