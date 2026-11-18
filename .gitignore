@@ -5,3 +5,6 @@ archive/*.zip
 .DS_Store
 Thumbs.db
 
+
+# 本地工作区数据（不参与发布）
+.workbuddy/
